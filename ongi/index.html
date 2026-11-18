@@ -1,0 +1,1039 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#f5f7ff">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="ongi">
+<title>ongi — App Prototype</title>
+<link rel="apple-touch-icon" href="assets/ongi-avatar.jpg">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<style>
+:root{
+  --coral:#fd7a8a; --ink:#202020; --sub:#4e494b; --muted:#716971;
+  --font:"RixAirSans","Pretendard Variable","Pretendard","Apple SD Gothic Neo","Noto Sans KR",sans-serif;
+  --font2:"RixMGoSE","Pretendard Variable","Pretendard","Apple SD Gothic Neo",sans-serif;
+  --pill:radial-gradient(142px 32px at 50% 50%,#fd7a8a 0%,#fe9ba7 25%,#febdc5 50%,#fff 100%);
+  --cta:radial-gradient(171px 27px at 50% 50%,rgba(255,97,102,.8) 0%,rgba(255,136,138,.9) 50%,#ffb0ad 100%);
+  --fadeTop:#f5f7ff; --fadeBot:#fff2ed;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;background:#ece8ee;overscroll-behavior:none;-webkit-text-size-adjust:100%}
+html{height:100%}
+body{position:absolute;left:0;top:0;width:100%;height:100vh;overflow:hidden;touch-action:manipulation;font-family:var(--font);color:var(--ink);-webkit-font-smoothing:antialiased;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none}
+#safe-probe{position:fixed;left:0;top:0;width:0;height:0;visibility:hidden;padding-top:env(safe-area-inset-top)}
+button{font:inherit;color:inherit;background:none;border:0;cursor:pointer;text-align:inherit}
+input{font:inherit;color:inherit;border:0;outline:0;background:none;-webkit-user-select:text;user-select:text}
+img{display:block;-webkit-user-drag:none}
+p{white-space:nowrap}
+
+#viewport{position:relative;width:393px;height:852px;flex:none}
+#device{position:absolute;inset:0;overflow:hidden;background:#fff;border-radius:var(--radius,0);isolation:isolate}
+.screen{position:absolute;inset:0;overflow:hidden;opacity:0;visibility:hidden;isolation:isolate}
+.screen.active{opacity:1;visibility:visible;z-index:2}
+.screen.entering{visibility:visible;z-index:3}
+.abs{position:absolute}
+.bg{position:absolute;inset:0;background:#fff}
+.bg::before{content:"";position:absolute;inset:0;background:url(assets/aurora.jpg) center/100% 100% no-repeat;transition:opacity .4s}
+.bg.fixed-aurora::before{opacity:1!important}
+body.white .bg:not(.fixed-aurora)::before{opacity:0}
+body.white{--fadeTop:#fff;--fadeBot:#fff}
+.fade-top{position:absolute;left:0;top:0;width:100%;height:150px;background:linear-gradient(180deg,var(--fadeTop) 0%,color-mix(in srgb,var(--fadeTop) 92%,transparent) 70%,transparent 100%);pointer-events:none;z-index:4}
+.fade-bot{position:absolute;left:0;bottom:0;width:100%;height:140px;background:linear-gradient(180deg,transparent 0%,color-mix(in srgb,var(--fadeBot) 90%,transparent) 35%,var(--fadeBot) 100%);pointer-events:none;z-index:4}
+.home-ind{position:absolute;left:calc(50% - 72.9px);bottom:20.97px;width:149px;height:5.03px;border-radius:99px;background:#121212;z-index:6}
+.scroller{position:absolute;left:0;top:0;width:100%;height:100%;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;scrollbar-width:none;z-index:1}
+.scroller::-webkit-scrollbar{display:none}
+.scroller .content{position:relative;width:393px}
+
+/* ---------- shared pieces ---------- */
+.pill{position:absolute;height:41px;border:1px solid #fff;border-radius:999px;background:var(--pill);display:flex;align-items:center;justify-content:center;font-weight:500;font-size:14px;line-height:21px;color:#3b3336;transition:transform .15s}
+.pill:active,.cta:active,.tapcard:active{transform:scale(.98)}
+.pill.off{opacity:.45;pointer-events:none}
+.link{position:absolute;left:32px;width:329px;text-align:center;font-weight:500;font-size:12px;line-height:18px;color:#716971}
+.intro{position:absolute;left:32px;top:142px;width:329px;display:flex;flex-direction:column;align-items:center;gap:18px;text-align:center}
+.intro h1{font-weight:500;font-size:26px;line-height:36px;color:#202020;white-space:nowrap}
+.intro h1.r{font-weight:400}
+.intro .d{font-weight:400;font-size:14px;line-height:21px;color:#4e494b;white-space:pre-line}
+.header{position:absolute;left:0;top:54px;width:390px;height:92px;z-index:5}
+.header .back{position:absolute;left:15px;top:13px;width:48px;height:48px;display:flex;align-items:center;justify-content:center}
+.header h2{position:absolute;left:84px;top:23px;font-weight:400;font-size:22px;line-height:32px;color:#1c1a29;white-space:nowrap}
+.cta{position:absolute;left:25px;width:342px;height:54px;border-radius:27px;background:var(--cta);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:600;font-size:15px;z-index:6;transition:transform .15s}
+.card{position:absolute;background:#fff;border-radius:24px;box-shadow:0 2px 6px 1px rgba(190,190,190,.25);overflow:hidden}
+.glass{background:rgba(255,255,255,.52)}
+body.white .glass{background:#fff;box-shadow:0 2px 6px 1px rgba(190,190,190,.25)}
+.ico{display:block}
+
+/* ---------- orb (루미 오브) ---------- */
+.orb{position:absolute;width:280px;height:280px;pointer-events:none}
+.orb .halo{position:absolute;inset:0;width:100%;height:100%;animation:breathe 3.2s ease-in-out infinite}
+.orb .core{position:absolute;left:14.64%;top:14.64%;width:70.72%;height:70.72%;border-radius:50%;overflow:hidden;animation:flow 7.8s linear infinite}
+.orb .core img{position:absolute;left:-20.7%;top:-20.7%;width:141.4%;height:141.4%}
+.orb .wave{position:absolute;left:11.8%;top:11.8%;width:76.4%;height:76.4%;border-radius:50%;border:1.5px solid rgba(253,122,138,.35);opacity:0;animation:wave 3.9s ease-out infinite}
+.orb .wave:nth-child(4){animation-delay:1.3s}.orb .wave:nth-child(5){animation-delay:2.6s}
+@keyframes breathe{0%,100%{transform:scale(1)}50%{transform:scale(1.035)}}
+@keyframes flow{to{transform:rotate(360deg)}}
+@keyframes wave{0%{transform:scale(.9);opacity:.0}15%{opacity:.8}100%{transform:scale(1.45);opacity:0}}
+
+/* ---------- welcome ---------- */
+.grad-title{background:radial-gradient(199px 37px at 50% 50%,#fd7a8a 0%,#fea262 75%,#ffb055 100%);-webkit-background-clip:text;background-clip:text;color:transparent}
+
+/* ---------- finding ---------- */
+.dots{display:flex;gap:6px;align-items:center}
+.dots i{width:8px;height:8px;border-radius:50%;background:#fd7a8a;opacity:.25;animation:dot 1.2s infinite}
+.dots i:nth-child(2){animation-delay:.2s}.dots i:nth-child(3){animation-delay:.4s}
+@keyframes dot{0%,100%{opacity:.25}30%{opacity:1}}
+
+/* ---------- found list ---------- */
+.devgrid{display:grid;grid-template-columns:160px 160px;gap:10px 9px}
+.devbox{height:52px;border-radius:14px;background:rgba(255,255,255,.5);border:1px solid #fff;display:flex;align-items:center;gap:9px;padding-left:14px;font-size:13px;line-height:20px;color:#3b3336}
+.devbox i{width:11px;height:11px;border-radius:50%;background:#fd7a8a;flex:none}
+.devbox.pop{animation:pop .5s cubic-bezier(.2,.9,.3,1.2) both}
+@keyframes pop{from{opacity:0;transform:translateY(8px) scale(.96)}to{opacity:1;transform:none}}
+
+/* ---------- pick ---------- */
+.tabs{position:absolute;left:32px;top:269px;display:flex;width:329px}
+.tabs button{width:164.5px;height:37px;display:flex;flex-direction:column;align-items:center;gap:12px;font-size:13px;line-height:20px;color:#969099;font-weight:500}
+.tabs button.on{color:#373238;font-weight:300}
+.tabs button.on::after{content:"";width:164px;height:1.5px;background:linear-gradient(90deg,rgba(253,122,138,.3),#fd7a8a,rgba(253,122,138,.3))}
+.catlist{position:absolute;left:32px;top:320px;width:329px;height:376px;overflow-y:auto;scrollbar-width:none}
+.catlist::-webkit-scrollbar{display:none}
+.cat{border-bottom:.5px solid rgba(74,67,74,.15)}
+.cat:last-child{border-bottom:0}
+.cat-h{width:329px;height:44px;display:flex;align-items:center;gap:8px;font-weight:300;font-size:14px;line-height:21px;color:#4a434a}
+.cat-h .t{flex:1;white-space:pre}
+.cat-h .ci{opacity:.8}.cat-h .pm{opacity:.55}
+.cat-b{display:none;grid-template-columns:160px 160px;gap:8px 9px;padding:4px 0 16px}
+.cat.open .cat-b{display:grid}
+.chip{height:34px;border-radius:9px;background:rgba(255,255,255,.34);border:.7px solid rgba(255,255,255,.7);display:flex;align-items:center;gap:7px;padding:0 9px;font-weight:500;font-size:12px;line-height:18px;color:#645c66;transition:background .2s,border-color .2s,color .2s}
+.chip i{width:11px;height:11px;border-radius:50%;border:1px solid #9a8f9c;flex:none;transition:all .2s}
+.chip.sel{background:rgba(255,255,255,.85);border-color:rgba(253,122,138,.55);color:#3b3336}
+.chip.sel i{background:#fd7a8a;border-color:#fd7a8a;box-shadow:0 0 0 2px rgba(253,122,138,.18)}
+.autolist{position:absolute;left:32px;top:320px;width:329px;display:none}
+.pick-auto .autolist{display:block}.pick-auto .catlist{display:none}
+
+/* overlay sheet */
+.dim{position:absolute;inset:0;background:rgba(31,26,28,.4);opacity:0;pointer-events:none;transition:opacity .35s;z-index:20}
+.sheet{position:absolute;left:0;bottom:0;width:393px;background:#fff;border-radius:28px 28px 0 0;padding:12px 24px 40px;display:flex;flex-direction:column;align-items:center;transform:translateY(105%);transition:transform .45s cubic-bezier(.3,.9,.3,1);z-index:21}
+.show-sheet .dim{opacity:1;pointer-events:auto}.show-sheet .sheet{transform:none}
+.sheet .handle{width:36px;height:4px;border-radius:2px;background:#d9d4d6;margin-bottom:24px}
+.sheet h3{width:100%;font-weight:400;font-size:22px;line-height:32px;color:#202020}
+.sheet h3 b{font-weight:400;color:#fd7a8a}
+.sheet .d{width:100%;margin-top:8px;font-weight:500;font-size:14px;line-height:21px;color:#4e494b}
+.sheet .box{margin-top:20px;width:345px;height:220px;border-radius:16px;background:#faf6f7;overflow-y:auto;padding:16px;display:flex;flex-wrap:wrap;align-content:flex-start;gap:8px}
+.sheet .box span{height:32px;padding:0 12px;border-radius:16px;background:#fff;border:1px solid #f3dfe2;display:flex;align-items:center;gap:6px;font-size:12px;font-weight:500;color:#4a434a}
+.sheet .box span i{width:7px;height:7px;border-radius:50%;background:#fd7a8a}
+.sheet .box .empty{width:100%;text-align:center;margin-top:78px;font-size:13px;color:#a79ea4}
+.sheet .big{margin-top:24px;width:345px;height:48px;border:1px solid #fff;border-radius:999px;background:radial-gradient(271px 38px at 50% 50%,#fd7a8a 0%,#fe9ba7 25%,#febdc5 50%,#fff 100%);font-weight:500;font-size:14px;color:#3b3336;display:flex;align-items:center;justify-content:center}
+.sheet .again{margin-top:14px;font-weight:500;font-size:13px;line-height:18px;color:#716971}
+
+/* ---------- theme ---------- */
+.themebox{position:absolute;left:24px;top:300px;width:345px;padding:24px 18px 22px;border-radius:28px;background:rgba(255,255,255,.8);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);box-shadow:0 4px 8.3px 3px rgba(253,122,138,.15);display:flex;justify-content:center;gap:64px}
+.themebox button{display:flex;flex-direction:column;align-items:center;gap:12px;font-weight:300;font-size:15px;line-height:22px;color:#3b3336}
+.prev{position:relative;width:86px;height:176px;border-radius:16px;overflow:hidden;box-shadow:0 4px 10px rgba(253,122,138,.18)}
+.prev.au{background:linear-gradient(180deg,#d3b3e6 0%,#f3c3d3 45%,#fbb7b6 75%,#ff9c7e 100%)}
+.prev.wh{background:#fff;border:1px solid #f1e6e8;box-shadow:0 4px 10px rgba(190,190,190,.25)}
+.prev .l1{position:absolute;left:23px;top:22px;width:40px;height:5px;border-radius:3px;background:rgba(255,255,255,.9)}
+.prev.wh .l1{background:#f7b8c0}
+.prev .b1,.prev .b2{position:absolute;left:12px;width:62px;height:22px;border-radius:5px;background:rgba(255,255,255,.75)}
+.prev.wh .b1,.prev.wh .b2{background:#fff;border:1px solid #d9d4d6}
+.prev .b1{top:44px}.prev .b2{top:72px}
+.radio{width:24px;height:24px;border-radius:50%;border:1.5px solid #c9c0c5;display:flex;align-items:center;justify-content:center;transition:all .2s}
+.on>.radio{background:#fd7a8a;border-color:#fd7a8a}
+.on>.radio::after{content:"";width:9px;height:5px;border-left:2px solid #fff;border-bottom:2px solid #fff;transform:translateY(-1px) rotate(-45deg)}
+
+/* ---------- explore ---------- */
+.room{position:absolute;border:1.2px solid #fff;border-radius:50%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;padding:0 8px;text-align:center;background:radial-gradient(circle,rgba(255,255,255,.85) 0%,rgba(255,237,235,.7) 100%);box-shadow:0 6px 18px rgba(253,122,138,.16);opacity:0;transform:scale(.85);transition:opacity .6s,transform .6s cubic-bezier(.2,.9,.3,1.2)}
+.room.on{opacity:1;transform:none}
+.room b{font-weight:400;font-size:14px;line-height:20px;color:#3b3336}
+.room small{font-weight:500;font-size:10px;line-height:14px;color:#918590;white-space:nowrap}
+.pbar{position:absolute;left:130px;top:604px;width:132px;height:4px;border-radius:2px;background:rgba(255,255,255,.75);overflow:hidden}
+.pbar i{position:absolute;left:0;top:0;height:4px;border-radius:2px;background:linear-gradient(90deg,#ffb055,#fd7a8a);width:0}
+
+/* ---------- ready ---------- */
+.stats{position:absolute;left:0;top:355px;width:393px;display:flex;flex-direction:column;align-items:center;gap:28px;text-align:center}
+.nums{display:flex;gap:36px;align-items:center}
+.nums .n{display:flex;flex-direction:column;gap:4px;align-items:center}
+.nums .k{font-weight:500;font-size:13px;line-height:18px;color:#8f868a}
+.nums .v{display:flex;gap:2px;align-items:baseline;line-height:52px}
+.nums .v b{font-weight:400;font-size:44px;color:#2b2527}
+.nums .v span{font-weight:300;font-size:16px;color:#fd7a8a}
+.nums .sep{width:1px;height:40px;background:rgba(43,37,39,.12)}
+
+/* ---------- home ---------- */
+.hello{position:absolute;left:24.27px;top:60px;font-size:13px;color:#4d5785}
+.htitle{position:absolute;left:24px;top:89px;font-weight:500;font-size:27px;line-height:38px;color:#1a1a24;white-space:pre}
+.gear{position:absolute;left:323px;top:89px;width:44px;height:44px;border-radius:22px;background:rgba(255,255,255,.52);border:1px solid rgba(255,255,255,.72);-webkit-backdrop-filter:blur(9px);backdrop-filter:blur(9px);display:flex;align-items:center;justify-content:center}
+body.white .gear{background:#ffeff0;border-color:#ffeff0}
+.stage{position:absolute;left:25px;top:216px;width:342px;height:269px;border-radius:32px;background:rgba(255,255,255,.5);border:2px solid #fff;-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);overflow:hidden}
+body.white .stage{background:#fff;border-color:#fff;box-shadow:0 2px 10px 2px rgba(253,122,138,.14)}
+.stage .art{position:absolute;left:49px;top:11px;width:240px;height:170px;mix-blend-mode:multiply;-webkit-mask:radial-gradient(closest-side,#000 70%,transparent 100%);mask:radial-gradient(closest-side,#000 70%,transparent 100%);animation:float 5s ease-in-out infinite}
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-7px)}}
+.badge{position:absolute;left:calc(50% - 45px);top:186px;width:90px;height:20px;border-radius:20px;background:#fff;font-weight:500;font-size:11px;color:#ff5951;display:flex;align-items:center;justify-content:center}
+body.white .badge{background:#fff5f5}
+.stage p{position:absolute;left:0;width:100%;top:214px;text-align:center;font-weight:500;font-size:18px;line-height:27px;color:#0f0f0f}
+.evi{left:25px;top:509px;width:342px;height:166px}
+.evi .t{position:absolute;left:18px;top:23px;font-weight:500;font-size:13px;color:#0f0f0f}
+.evi .more{position:absolute;left:274px;top:25px;font-weight:500;font-size:11px;color:#756ea8;white-space:pre}
+.evi .line{position:absolute;left:39px;top:76px;width:260px;height:2px;border-radius:1px;background:rgba(158,150,199,.24)}
+.evi .pt{position:absolute;top:62px;width:76px;height:94px;text-align:center}
+.evi .pt i{position:absolute;left:31px;top:8px;width:14px;height:14px;border-radius:50%}
+.evi .pt b{position:absolute;left:0;top:42px;width:76px;font-family:var(--font2);font-weight:800;font-size:11px;color:#42405e}
+.evi .pt span{position:absolute;left:0;top:63px;width:76px;font-size:10px;color:#6b6b8a}
+.act{top:698px;width:166px;height:60px;border-radius:16px;-webkit-backdrop-filter:blur(11px);backdrop-filter:blur(11px)}
+.act .bub{position:absolute;left:14px;top:11px;width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center}
+.act p{position:absolute;left:72px;top:19px;font-weight:500;font-size:15px;color:#242133}
+
+/* ---------- evidence ---------- */
+.sum{position:absolute;left:27px;top:146px;width:342px;height:116px;border-radius:26px;background:rgba(255,255,255,.4);border:1px solid rgba(255,255,255,.74);-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px)}
+body.white .sum{background:#fff;box-shadow:0 2px 10px 2px rgba(253,122,138,.14)}
+.sbadge{position:absolute;left:17px;top:15px;height:27px;padding:0 10px;border-radius:15px;background:rgba(255,102,107,.14);font-weight:500;font-size:12px;color:#bf4561;display:flex;align-items:center}
+.sum h4{position:absolute;left:17px;top:51px;font-weight:600;font-size:17px;line-height:26px;color:#242133;white-space:pre}
+.tl{left:27px;top:280px;width:342px;height:420px;border-radius:26px;box-shadow:0 4px 6px 1px rgba(190,190,190,.25)}
+.tl .t{position:absolute;left:18px;top:22px;font-weight:500;font-size:15px;color:#242133}
+.tl .s{position:absolute;left:18px;top:48px;font-weight:500;font-size:10px;color:#6b6b8a}
+.tl .vline{position:absolute;left:37px;top:97px;width:2px;height:323px;background:linear-gradient(180deg,rgba(255,176,85,.6),rgba(253,122,138,.6))}
+.row{position:absolute;left:18px;width:306px;height:68px}
+.row i{position:absolute;left:14px;top:14px;width:12px;height:12px;border-radius:50%;border:2px solid #fff}
+.row b{position:absolute;left:34px;top:10px;font-family:var(--font2);font-weight:800;font-size:11px;color:#454261}
+.row p{position:absolute;left:34px;top:30px;font-weight:600;font-size:12px;color:#292638}
+.row small{position:absolute;left:34px;top:50px;font-weight:500;font-size:9px;color:#7a7a94}
+.row .tag{position:absolute;left:228px;top:30px;width:64px;height:24px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-weight:500;font-size:10px;color:#ff5951;background:rgba(255,89,81,.1)}
+.row .tag.g{color:#393939;background:rgba(110,110,110,.12)}
+.logic{left:27px;top:716px;width:342px;height:92px}
+.logic b{position:absolute;left:16px;top:14px;font-weight:700;font-size:12px;color:#54477a}
+.logic p{position:absolute;left:16px;top:40px;font-weight:500;font-size:12px;line-height:19px;color:#706d7c;white-space:pre}
+
+/* ---------- save mood ---------- */
+.prevcard{position:absolute;left:27px;top:146px;width:342px;height:246px;border-radius:30px;background:rgba(255,255,255,.5);border:1px solid rgba(255,255,255,.74)}
+body.white .prevcard{background:#fff;box-shadow:0 2px 10px 2px rgba(253,122,138,.14)}
+.prevcard .art{position:absolute;left:57px;top:14px;width:226px;height:160px;mix-blend-mode:multiply;-webkit-mask:radial-gradient(closest-side,#000 72%,transparent 100%);mask:radial-gradient(closest-side,#000 72%,transparent 100%);animation:float 5s ease-in-out infinite}
+.prevcard h5{position:absolute;left:0;width:100%;top:187px;text-align:center;font-family:var(--font2);font-weight:700;font-size:16px;color:#2e2940}
+.prevcard small{position:absolute;left:0;width:100%;top:217px;text-align:center;font-weight:500;font-size:10px;color:#7a70ab;white-space:pre}
+.lbl{position:absolute;left:27px;font-family:var(--font2);font-weight:700;font-size:13px;color:#292638}
+.namebox{left:27px;top:448px;width:342px;height:56px;border-radius:20px}
+.namebox input{position:absolute;left:18px;top:0;width:306px;height:56px;font-weight:500;font-size:14px;color:#38334a}
+.when{left:27px;top:528px;width:342px;padding:18px 18px 10px;border-radius:24px}
+.when .q{font-size:15px;line-height:1.5;color:#292929;padding-bottom:6px}
+.opt{display:flex;gap:12px;padding:11px 0;width:100%;text-align:left}
+.opt .rd{width:20px;height:20px;border-radius:10px;background:#edebf0;flex:none;transition:all .2s;position:relative}
+.opt.on .rd{background:#fd7a8a;box-shadow:0 4px 8px rgba(253,122,138,.35)}
+.opt.on .rd::after{content:"";position:absolute;left:6px;top:6px;width:8px;height:8px;border-radius:50%;background:#fff}
+.opt .c{flex:1;display:flex;flex-direction:column;gap:2px;line-height:1.5}
+.opt .c b{font-weight:300;font-size:14px;color:rgba(41,41,41,.85)}
+.opt.on .c b{font-weight:400;color:#292929}
+.opt .c small{font-weight:300;font-size:11px;color:#85808f}
+.mem{display:none;margin-top:2px;padding:9px 12px;border-radius:12px;background:rgba(253,122,138,.08);flex-direction:column;gap:2px}
+.opt.on .mem{display:flex}
+.mem em{font-style:normal;font-weight:300;font-size:11px;color:#fd7a8a}
+.mem span{font-size:12px;color:rgba(41,41,41,.9);white-space:pre}
+.hr{height:1px;background:rgba(41,41,41,.06);width:100%}
+.ask{display:flex;align-items:center;gap:12px;padding:12px 0 10px;width:100%;text-align:left}
+.ask .c{flex:1;display:flex;flex-direction:column;gap:1px;line-height:1.5}
+.ask .c b{font-weight:300;font-size:14px;color:rgba(41,41,41,.88)}
+.ask .c small{font-weight:300;font-size:11px;color:#85808f}
+.tog{width:38px;height:22px;border-radius:11px;background:#e3dfe6;position:relative;flex:none;transition:background .25s}
+.tog::after{content:"";position:absolute;left:2px;top:2px;width:18px;height:18px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.15);transition:transform .25s}
+.on>.tog,.tog.on{background:#fd7a8a}
+.on>.tog::after,.tog.on::after{transform:translateX(16px)}
+.apply{left:27px;width:342px;height:148px}
+.apply .t{position:absolute;left:18px;top:22px;font-family:var(--font2);font-weight:700;font-size:13px;color:#292638}
+
+/* ---------- saved (carousel) ---------- */
+.notice{position:absolute;left:25px;top:150px;width:342px;padding:10px 14px;border-radius:14px;background:rgba(255,255,255,.85);box-shadow:0 4px 12px rgba(140,115,140,.12);display:flex;gap:8px;align-items:center;font-weight:300;font-size:13px;line-height:1.5;color:rgba(41,41,41,.88);transition:opacity .4s}
+.notice i{width:7px;height:7px;border-radius:50%;background:#fd7a8a;flex:none}
+.summary{position:absolute;left:25px;width:342px;display:flex;justify-content:space-between;font-size:12px;line-height:1.5;color:rgba(41,41,41,.85)}
+.summary span{font-weight:300;color:#85808f}
+.slider{position:absolute;left:0;top:237px;width:393px;height:430px;overflow:hidden;touch-action:pan-y}
+.track{position:absolute;left:61.5px;top:10px;display:flex;gap:14px;transition:transform .45s cubic-bezier(.3,.9,.3,1)}
+.mcard{width:270px;height:370px;flex:none;border-radius:26px;background:#fff;padding:16px;display:flex;flex-direction:column;justify-content:space-between;filter:drop-shadow(0 6px 9px rgba(140,115,140,.12));opacity:.55;transition:opacity .4s,filter .4s}
+.mcard.cur{opacity:1;filter:drop-shadow(0 10px 13px rgba(253,122,138,.32))}
+.mcard .img{position:relative;width:238px;height:170px;border-radius:20px;overflow:hidden}
+.mcard .img img,.thumb img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;mix-blend-mode:multiply;-webkit-mask:radial-gradient(closest-side,#000 72%,transparent 100%);mask:radial-gradient(closest-side,#000 72%,transparent 100%)}
+.mcard .txt{display:flex;flex-direction:column;gap:4px;height:96px}
+.mcard .txt em{font-style:normal;font-size:12px;line-height:1.5;color:#d9455e}
+.mcard .txt b{font-weight:400;font-size:20px;line-height:1.4;letter-spacing:-.2px;color:#2a2a2a}
+.mcard .txt span{font-weight:300;font-size:13px;line-height:1.5;color:#6e6675}
+.mcard .txt small{font-weight:300;font-size:12px;line-height:1.5;color:#6e6675}
+.mcard .go{height:41px;border-radius:14px;background:#ffeff0;color:#d9455e;font-size:14px;display:flex;align-items:center;justify-content:center;transition:background .25s,color .25s}
+.mcard .go.lit{background:#fd7a8a;color:#fff}
+.pager{position:absolute;top:408px;left:0;width:393px;display:flex;justify-content:center;gap:6px}
+.pager button{width:6px;height:6px;border-radius:3px;background:rgba(253,122,138,.25);transition:width .3s,background .3s}
+.pager button.on{width:18px;background:#fd7a8a}
+.tolist{position:absolute;left:50%;transform:translateX(-50%);top:681px;padding:8px 10px 8px 14px;border-radius:16px;background:rgba(255,255,255,.85);box-shadow:0 2px 8px rgba(253,122,138,.14);display:flex;gap:4px;align-items:center;font-size:13px;line-height:1.5;color:rgba(41,41,41,.85)}
+
+/* ---------- list ---------- */
+.mlist{position:absolute;left:25px;top:180px;width:342px;padding:4px 14px;border-radius:21px;background:#fff;box-shadow:0 4px 10px 2px rgba(253,122,138,.14)}
+.mrow{display:flex;gap:12px;align-items:center;padding:12px 0;width:100%;text-align:left;border-bottom:1px solid rgba(41,41,41,.06)}
+.mrow:last-child{border-bottom:0}
+.thumb{position:relative;width:52px;height:52px;border-radius:12px;background:#faf5f5;overflow:hidden;flex:none}
+.mrow .c{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px;line-height:1.5}
+.mrow .c em{font-style:normal;font-size:11px;color:#fd7a8a}
+.mrow .c b{font-weight:400;font-size:15px;color:#292929}
+.mrow .c span{font-weight:300;font-size:11px;color:#85808f;white-space:normal}
+.new{padding:1px 6px;border-radius:6px;background:rgba(253,122,138,.14);font-weight:600;font-size:11px;line-height:1.5;color:#fd7a8a}
+
+/* ---------- adjust ---------- */
+.hero{left:25px;top:150px;width:342px;height:156px;border-radius:30px}
+.hero .art{position:absolute;left:14px;top:22px;width:160px;height:113px;mix-blend-mode:multiply;-webkit-mask:radial-gradient(closest-side,#000 70%,transparent 100%);mask:radial-gradient(closest-side,#000 70%,transparent 100%)}
+.hero b{position:absolute;left:182px;top:52px;font-weight:600;font-size:15px;color:#242133}
+.hero small{position:absolute;left:182px;top:84px;font-size:9.5px;line-height:16px;color:#6e6b8a;white-space:pre}
+.sec{position:absolute;left:27px;display:flex;align-items:center;gap:6px;font-weight:500;font-size:12px;color:#292638}
+.seg{left:25px;width:342px;height:68px;border-radius:22px;padding:14px}
+.seg .in{display:flex;height:40px;border-radius:14px;background:#f1eef2;padding:4px}
+.seg button{flex:1;border-radius:11px;font-size:12px;color:#8f888f;transition:all .2s;text-align:center}
+.seg button.on{background:#fff;color:#242133;font-weight:600;box-shadow:0 1px 4px rgba(0,0,0,.08)}
+.sl{left:25px;width:342px;border-radius:22px;padding:18px 16px 14px}
+.sl .r{display:flex;justify-content:space-between;font-size:13px;color:#292638}
+.range{position:relative;height:26px;margin:10px 0 6px;touch-action:none}
+.range .rail{position:absolute;left:0;right:0;top:12px;height:3px;border-radius:2px;background:#e3dfe6}
+.range .fill{position:absolute;left:0;top:12px;height:3px;border-radius:2px;background:#fd7a8a}
+.range .knob{position:absolute;top:5px;width:17px;height:17px;margin-left:-8.5px;border-radius:50%;background:#fff;border:2px solid #fd7a8a;box-shadow:0 2px 5px rgba(253,122,138,.3)}
+.sl .ends{display:flex;justify-content:space-between;font-size:10px;color:#8f888f}
+.sl .hr{margin:12px 0 14px}
+.tg{left:25px;width:342px;border-radius:22px;padding:4px 16px}
+.tgrow{display:flex;align-items:center;justify-content:space-between;width:100%;padding:14px 0;text-align:left;border-bottom:1px solid rgba(41,41,41,.06)}
+.tgrow:last-child{border-bottom:0}
+.tgrow b{display:block;font-weight:400;font-size:13px;color:#292638}
+.tgrow small{display:block;margin-top:3px;font-size:10px;color:#a29aa6}
+.chips2{display:flex;flex-wrap:wrap;gap:6px;padding:4px 0 14px}
+.chips2 button{height:30px;padding:0 12px;border-radius:15px;background:#f6f2f5;font-size:12px;color:#6e6675;transition:all .2s}
+.chips2 button.on{background:#ffeff0;color:#d9455e;box-shadow:inset 0 0 0 1px rgba(253,122,138,.45)}
+
+/* ---------- settings ---------- */
+.robot{left:26px;top:149px;width:342px;height:78px;border-radius:24px;box-shadow:none}
+.robot img{position:absolute;left:16px;top:15px;width:48px;height:48px;border-radius:50%}
+.robot b{position:absolute;left:82px;top:17px;font-weight:700;font-size:14px;color:#292638}
+.robot small{position:absolute;left:82px;top:44px;font-size:11px;color:#6e6b8a;white-space:pre}
+.short{left:26px;width:342px;height:64px;border-radius:24px;padding:0 18px;display:flex;align-items:center;gap:10px;box-shadow:none}
+.short .c{flex:1;display:flex;flex-direction:column;gap:2px;line-height:1.5;text-align:left}
+.short .c b{font-weight:400;font-size:14px;color:#292929}
+.short .c small{font-weight:300;font-size:11px;color:#85808f}
+.short .v{font-size:13px;line-height:1.5;color:rgba(41,41,41,.8)}
+.perm{left:26px;width:342px;height:224px}
+.perm .t,.auto .t{position:absolute;left:18px;top:16px;font-weight:700;font-size:14px;color:#292638}
+.prow{position:absolute;left:0;width:342px;height:42px}
+.prow .pi{position:absolute;left:18px;top:4px;opacity:.75}
+.prow p{position:absolute;left:44px;top:5px;font-size:12px;color:#403d54}
+.st{position:absolute;left:270px;top:0;width:54px;height:26px;border-radius:13px;font-weight:500;font-size:9px;display:flex;align-items:center;justify-content:center;background:rgba(166,163,178,.12);color:#737085;transition:all .2s}
+.st.on{background:rgba(255,107,107,.16);color:#c74d61}
+.auto{left:26px;width:342px;height:132px}
+.auto p{position:absolute;left:18px;font-weight:500;font-size:11px;color:#4f4d6b}
+.auto .m{position:absolute;left:250px;width:74px;text-align:right;font-weight:600;font-size:10px}
+.privacy{left:26px;width:342px;height:80px;border-radius:22px}
+.privacy b{position:absolute;left:18px;top:20px;font-weight:700;font-size:12px;color:#4a4f7d}
+.privacy p{position:absolute;left:18px;top:46px;font-size:11px;color:#6e6e8f;white-space:pre}
+
+/* ---------- devices ---------- */
+.dhead{position:absolute;left:27px;top:150px}
+.dhead h3{font-weight:400;font-size:14px;color:#292638;display:flex;align-items:baseline;gap:6px}
+.dhead h3 b{font-weight:500;font-size:26px;color:#1c1a29}
+.dhead p{margin-top:4px;font-size:11px;color:#8f868a}
+.rgroup{position:absolute;left:25px;width:342px}
+.rgroup .rt{margin-left:2px;font-weight:500;font-size:12px;color:#292638}
+.rgroup .rt span{color:#a29aa6;font-weight:400;margin-left:4px}
+.rlist{margin-top:10px;border-radius:22px;padding:2px 16px}
+.drow{display:flex;align-items:center;gap:10px;height:46px;border-bottom:1px solid rgba(41,41,41,.06);font-size:13px;color:#292638}
+.drow:last-child{border-bottom:0}
+.drow .n{flex:1}
+.drow .s{font-size:11px;color:#8f868a}
+.drow .nw{font-size:10px;font-weight:600;color:#fd7a8a;margin-left:2px}
+
+.toast{position:absolute;left:50%;top:110px;transform:translate(-50%,-10px);padding:9px 16px;border-radius:18px;background:rgba(41,38,56,.86);color:#fff;font-size:12px;opacity:0;pointer-events:none;transition:all .35s;z-index:30;white-space:nowrap}
+.toast.on{opacity:1;transform:translate(-50%,0)}
+</style>
+</head>
+<body>
+<div id="safe-probe"></div>
+<div id="viewport"><div id="device">
+
+<!-- 110 · 시작 -->
+<section class="screen" id="welcome">
+  <div class="bg fixed-aurora"></div>
+  <p class="abs grad-title" style="left:81px;top:336px;font-weight:600;font-size:28px;line-height:1.2;letter-spacing:-.56px">반가워요! ongi에요.</p>
+  <p class="abs" style="left:0;width:393px;top:402px;text-align:center;font-size:13.8px;line-height:1.68;color:rgba(31,31,31,.8);white-space:pre-line">앞으로 함께할 당신을 조금 더 알고 싶어요.
+몇 가지 질문으로 시작해 볼까요?</p>
+  <button class="pill" style="left:107px;top:589px;width:181px" data-go="finding">시작하기</button>
+  <div class="home-ind"></div>
+</section>
+
+<!-- 기기 찾는 중 -->
+<section class="screen" id="finding" data-auto="found" data-auto-delay="3200">
+  <div class="bg fixed-aurora"></div>
+  <div class="intro"><h1 style="font-size:24px">우리 집 IoT 기기를 찾고 있어요.</h1><p class="d">온기가 가까운 기기의 신호를
+하나씩 듣고 있어요.</p></div>
+  <div class="orb" style="left:52px;top:303px"><img class="halo" src="assets/orb-halo.png" alt=""><div class="core"><img src="assets/orb-core.png" alt=""></div><i class="wave"></i><i class="wave"></i><i class="wave"></i></div>
+  <div class="abs" style="left:131px;top:633px;display:flex;gap:10px;align-items:center"><p style="font-weight:300;font-size:16px;line-height:24px;color:#4e494b">신호를 찾는 중</p><div class="dots"><i></i><i></i><i></i></div></div>
+  <div class="home-ind"></div>
+</section>
+
+<!-- 111 · 기기를 찾았어요 -->
+<section class="screen" id="found">
+  <div class="bg fixed-aurora"></div>
+  <div class="intro"><h1>우리 집 기기를 찾았어요.</h1><p class="d">가까운 기기의 신호를 따라
+연결 가능한 기기를 먼저 연결했어요.</p></div>
+  <div class="abs" style="left:32px;top:306px">
+    <p style="font-size:13px;line-height:18px;font-weight:500;color:#716971">자동으로 연결된 기기 <b style="font-weight:600;color:#fd7a8a;margin-left:2px" data-text="autoCount">6</b></p>
+    <div class="devgrid" id="foundGrid" style="margin-top:14px"></div>
+  </div>
+  <button class="pill" style="left:105px;top:736px;width:183px" data-go="pick">다른 기기 추가하기</button>
+  <button class="link" style="top:790px" data-go="theme">이대로 계속하기</button>
+  <div class="home-ind"></div>
+</section>
+
+<!-- 112 · 함께 쓸 기기 선택 + 오버레이 -->
+<section class="screen" id="pick">
+  <div class="bg fixed-aurora"></div>
+  <div class="intro"><h1 class="r">함께 쓸 기기를 골라주세요.</h1><p class="d">자동으로 찾지 못한 기기는
+아래에서 직접 추가할 수 있어요.</p></div>
+  <div class="tabs"><button data-tab="auto"><span>자동 연결&nbsp;&nbsp;<span data-text="autoCount">6</span></span></button><button class="on" data-tab="pick"><span>직접 선택&nbsp;&nbsp;<span id="pickCount">0</span></span></button></div>
+  <div class="catlist stretch" id="catList"></div>
+  <div class="autolist"><div class="devgrid" id="autoGrid"></div></div>
+  <p class="abs" style="left:32px;width:329px;top:706px;text-align:center;font-weight:500;font-size:11px;line-height:17px;color:#918590">고른 기기는 연결 방법을 안내해 드려요.</p>
+  <button class="pill" style="left:106px;top:735px;width:181px" id="openSheet">선택한 기기 추가하기</button>
+  <button class="link" style="top:791px" id="later">나중에 추가할게요</button>
+  <div class="home-ind"></div>
+  <div class="dim layer" id="dim"></div>
+  <div class="sheet layer">
+    <div class="handle"></div>
+    <h3><b id="sheetN">0개</b>의 기기를 추가할까요?</h3>
+    <p class="d">선택한 기기는 하나씩 연결 방법을 안내해 드려요.</p>
+    <div class="box" id="sheetBox"></div>
+    <button class="big" id="confirmAdd">추가하기</button>
+    <button class="again" id="closeSheet">다시 고를게요</button>
+  </div>
+</section>
+
+<!-- 테마 선택 -->
+<section class="screen" id="theme">
+  <div class="bg fixed-aurora"></div>
+  <p class="abs" style="left:0;width:393px;top:114px;text-align:center;font-weight:300;font-size:13px;line-height:18px;color:#fd7a8a">첫 번째 질문</p>
+  <div class="intro"><h1 class="r" style="font-size:24px">온기와 지낼 색을 골라주세요.</h1><p class="d">고른 색은 앱 전체에 적용돼요.
+나중에 설정에서 언제든 바꿀 수 있어요.</p></div>
+  <div class="themebox" data-single="theme">
+    <button data-v="aurora"><div class="prev au"><i class="l1"></i><i class="b1"></i><i class="b2"></i></div>오로라<span class="radio"></span></button>
+    <button data-v="white"><div class="prev wh"><i class="l1"></i><i class="b1"></i><i class="b2"></i></div>화이트<span class="radio"></span></button>
+  </div>
+  <button class="pill" style="left:106px;top:735px;width:181px" id="themeOk">이 분위기로 할게요</button>
+  <div class="home-ind"></div>
+</section>
+
+<!-- 114 · 집을 알아가요 -->
+<section class="screen" id="explore">
+  <div class="bg"></div>
+  <div class="intro"><h1 class="r">ongi가 집을 알아가요.</h1><p class="d">ongi가 집 안을 한 바퀴 돌면서
+어떤 공간에 어떤 기기가 있는지 알아가고 있어요.</p></div>
+  <div class="orb" style="left:91.5px;top:337px;width:210px;height:210px"><img class="halo" src="assets/orb-halo.png" alt=""><div class="core"><img src="assets/orb-core.png" alt=""></div><i class="wave"></i><i class="wave"></i><i class="wave"></i></div>
+  <div class="abs" id="rooms" style="left:0;top:262px;width:393px;height:406px"></div>
+  <div class="pbar"><i id="pfill"></i></div>
+  <div class="abs" style="left:32px;top:646px;width:329px;display:flex;justify-content:space-between;font-weight:300;font-size:13px;line-height:18px;color:#4e494b"><span id="exMsg">집 안을 둘러보기 시작했어요</span><span style="font-size:12px;color:#918590" id="exNum">찾은 공간 0곳 · 기기 0개</span></div>
+  <p class="abs" style="left:32px;width:329px;top:686px;text-align:center;font-weight:500;font-size:12px;line-height:18px;color:#8a808b">추정한 공간은 나중에 바꿀 수 있어요.</p>
+  <div class="home-ind"></div>
+</section>
+
+<!-- 113 · 함께 시작해요 -->
+<section class="screen" id="ready">
+  <div class="bg"></div>
+  <div class="intro"><h1 class="r">이제, 함께 시작해요.</h1><p class="d">ongi가 우리 집을 조금 알게 됐어요.</p></div>
+  <div class="stats">
+    <div class="nums"><div class="n"><p class="k">연결한 기기</p><div class="v"><b data-text="devCount">6</b><span>개</span></div></div><i class="sep"></i><div class="n"><p class="k">알아본 공간</p><div class="v"><b data-text="roomCount">4</b><span>곳</span></div></div></div>
+    <div style="display:flex;flex-direction:column;gap:6px;align-items:center"><p style="font-weight:300;font-size:15px;line-height:22px;color:#2b2527;white-space:pre" data-text="roomLine">거실  ·  주방  ·  현관  ·  침실</p><p style="font-weight:500;font-size:13px;line-height:20px;color:#8f868a" data-text="devLine">조명과 스피커부터 무드등까지 하나씩 둘러봤어요.</p></div>
+    <p style="font-size:14px;line-height:22px;color:#5f575b;white-space:pre-line">생활 리듬이나 좋아하는 분위기는
+함께 지내며 천천히 알아갈게요.</p>
+  </div>
+  <p class="abs" style="left:32px;width:329px;top:705px;text-align:center;font-weight:500;font-size:12px;line-height:18px;color:#9a9095">기기와 공간은 설정에서 언제든 바꿀 수 있어요.</p>
+  <button class="pill" style="left:106px;top:735px;width:181px" data-go="home">시작하기</button>
+  <div class="home-ind"></div>
+</section>
+
+<!-- 117 / 118 · 홈 -->
+<section class="screen" id="home">
+  <div class="bg"></div>
+  <p class="hello" id="hello">좋은 저녁이에요</p>
+  <p class="htitle">오늘의 기척을
+알려드릴게요.</p>
+  <button class="gear" data-go="settings" aria-label="설정" data-icon="gear"></button>
+  <div class="stage"><img class="art" src="assets/mood-calm.jpg" alt=""><span class="badge">편안해지는 중</span><p>지금은 조금 편안해 보여요.</p></div>
+  <button class="card tapcard evi" data-go="evidence">
+    <p class="t"><span data-text="userName">지안</span>의 상태를 알아봤어요.</p><p class="more">자세히  ›</p><i class="line"></i>
+    <div class="pt" style="left:16px"><i style="background:#ffd9c6"></i><b>18:42</b><span>문 열림</span></div>
+    <div class="pt" style="left:94px"><i style="background:#ffc0b8"></i><b>18:50</b><span>한숨 감지</span></div>
+    <div class="pt" style="left:172px"><i style="background:#ff9a95"></i><b>19:05</b><span>느린 움직임</span></div>
+    <div class="pt" style="left:250px"><i style="background:#ff6b6b;box-shadow:0 0 0 4px rgba(255,107,107,.18)"></i><b>19:20</b><span>움직임 없음</span></div>
+  </button>
+  <button class="card tapcard act" style="left:25px" data-go="save"><span class="bub" style="background:#ffeff0" data-icon="save"></span><p>분위기 저장</p></button>
+  <button class="card tapcard act" style="left:202px" data-go="adjust"><span class="bub" style="background:#eef0ff" data-icon="adjust"></span><p>분위기 조절</p></button>
+  <div class="home-ind"></div>
+</section>
+
+<!-- 116 · 기척의 근거 -->
+<section class="screen" id="evidence">
+  <div class="bg"></div>
+  <div class="scroller"><div class="content" style="height:840px">
+    <div class="sum"><span class="sbadge">편안해지는 중</span><h4>귀가 직후에는 지쳐 보였지만,
+점차 움직임이 안정됐어요.</h4></div>
+    <div class="card tl"><p class="t">감지된 기척 포인트</p><p class="s">오감 센서 중 3개 감각에서 이상을 감지했어요. (3/5)</p><i class="vline"></i>
+      <div class="row" style="top:83px"><i style="background:#ffd3b8"></i><b>18:42</b><p>현관문이 열렸어요</p><small>도어 센서</small><span class="tag g">귀가</span></div>
+      <div class="row" style="top:161px"><i style="background:#ffb59e"></i><b>18:43</b><p>짧은 한숨이 감지됐어요</p><small>공간 마이크 · 내용 저장 안 함</small><span class="tag">피로 신호</span></div>
+      <div class="row" style="top:239px"><i style="background:#ff8f86"></i><b>18:46</b><p>움직임 속도가 평소보다 느려요</p><small>실내 동작 센서</small><span class="tag">긴장·피로</span></div>
+      <div class="row" style="top:317px"><i style="background:#ff5f63"></i><b>19:06</b><p>심박수가 높아졌어요</p><small>체내 심박수 감지</small><span class="tag">긴장</span></div>
+    </div>
+    <div class="card logic"><b>온기가 학습을 마쳤어요.</b><p>귀가 직후 피로 신호를 감지해서 분위기를 바꿨지만,
+이후에도 계속되는 심박수로, 집에 아로마 향을 추가했어요.</p></div>
+  </div></div>
+  <div class="fade-top"></div>
+  <div class="header"><button class="back" data-go="home" data-icon="back" aria-label="뒤로"></button><h2>기척의 근거</h2></div>
+</section>
+
+<!-- 115 · 분위기 저장 -->
+<section class="screen" id="save">
+  <div class="bg"></div>
+  <div class="scroller"><div class="content" style="height:1020px">
+    <div class="prevcard"><img class="art" src="assets/mood-today.jpg" alt=""><h5>오늘의 온기</h5><small>빛  ·  움직임  ·  소리  ·  촉각  ·  향</small></div>
+    <p class="lbl" style="top:418px">이 분위기의 이름</p>
+    <label class="card namebox"><input id="moodName" maxlength="16" placeholder="지친 날의 포근함" enterkeyhint="done"></label>
+    <div class="card when" style="position:absolute">
+      <p class="q">ongi가 언제 다시 켜 줄까요?</p>
+      <div data-single="when">
+        <button class="opt" data-v="auto"><span class="rd"></span><span class="c"><b>지금과 비슷한 상황이 오면</b><small>Ongi가 비슷하다고 느낄 때 알아서 켜요</small><span class="mem"><em>Ongi가 기억한 지금</em><span>평일 저녁 7시쯤  ·  퇴근 직후  ·  조금 지쳐 보임</span></span></span></button>
+        <button class="opt" data-v="manual"><span class="rd"></span><span class="c"><b>내가 고를 때만</b><small>자동으로 켜지 않아요</small></span></button>
+      </div>
+      <div class="hr"></div>
+      <button class="ask" id="askTog"><span class="c"><b>켜기 전에 먼저 물어보기</b><small>끄면 루미가 알아서 조용히 켜요</small></span><span class="tog"></span></button>
+    </div>
+    <button class="card tapcard apply" id="applyCard" data-go="saved" style="top:840px"><p class="t">저장한 분위기 보기</p><p class="abs" style="left:274px;top:25px;font-weight:500;font-size:11px;color:#756ea8;white-space:pre">자세히  ›</p>
+      <i class="abs" style="left:9px;top:68px;width:323px;height:2px;background:rgba(158,150,199,.24)"></i>
+      <div id="applyPts"></div>
+    </button>
+  </div></div>
+  <div class="fade-top"></div><div class="fade-bot"></div>
+  <div class="header"><button class="back" data-go="home" data-icon="back" aria-label="뒤로"></button><h2>분위기 저장</h2></div>
+  <button class="cta" style="top:764px" id="saveMood">이 분위기 저장할게요</button>
+</section>
+
+<!-- 저장한 분위기 (카드) -->
+<section class="screen" id="saved">
+  <div class="bg"></div>
+  <div class="notice" id="notice"><i></i><span id="noticeTxt"></span></div>
+  <div class="summary" id="sum1" style="top:208px"><b style="font-weight:400" data-text="moodCount">분위기 6개</b><span>최근 저장 순</span></div>
+  <div class="slider" id="slider"><div class="track" id="track"></div><div class="pager" id="pager"></div></div>
+  <button class="tolist" data-go="list">목록으로 보기 <span data-icon="more" style="opacity:.5"></span></button>
+  <div class="fade-top"></div><div class="fade-bot"></div>
+  <div class="header"><button class="back" data-go="home" data-icon="back" aria-label="뒤로"></button><h2>저장한 분위기</h2></div>
+  <button class="cta" style="top:764px" data-go="adjust">새 분위기 만들기</button>
+  <div class="toast" id="toast"></div>
+</section>
+
+<!-- 저장한 분위기 · 목록 -->
+<section class="screen" id="list">
+  <div class="bg"></div>
+  <div class="scroller"><div class="content" id="listContent" style="height:900px">
+    <div class="summary" style="top:150px"><b style="font-weight:400" data-text="moodCount">분위기 6개</b><span>최근 저장 순</span></div>
+    <div class="mlist" id="mlist"></div>
+  </div></div>
+  <div class="fade-top"></div><div class="fade-bot"></div>
+  <div class="header"><button class="back" data-go="saved" data-icon="back" aria-label="뒤로"></button><h2>저장한 분위기</h2></div>
+  <button class="cta" style="top:764px" data-go="adjust">새 분위기 만들기</button>
+</section>
+
+<!-- 분위기 조절 -->
+<section class="screen" id="adjust">
+  <div class="bg"></div>
+  <div class="scroller"><div class="content" style="height:1330px">
+    <div class="card glass hero" style="position:absolute;box-shadow:none"><img class="art" src="assets/mood-today.jpg" alt=""><b>포근하고 조용하게</b><small>조절하면 로봇의 빛과 움직임이
+바로 미리보기로 반영돼요</small></div>
+    <p class="sec" style="top:326px">적용할 공간</p>
+    <div class="card seg" style="top:350px"><div class="in" data-single="room"><button data-v="집 전체">집 전체</button><button data-v="거실">거실</button><button data-v="침실">침실</button><button data-v="주방">주방</button></div></div>
+    <p class="sec" style="top:440px"><span data-icon="bulb"></span>조명</p>
+    <div class="card sl" style="top:464px">
+      <div class="r"><span>밝기</span><span id="vBright">40%</span></div>
+      <div class="range" data-range="bright" data-min="0" data-max="100"><i class="rail"></i><i class="fill"></i><i class="knob"></i></div>
+      <div class="hr"></div>
+      <div class="r"><span>색온도</span><span id="vTemp">2700K</span></div>
+      <div class="range" data-range="temp" data-min="2200" data-max="6500"><i class="rail"></i><i class="fill"></i><i class="knob"></i></div>
+      <div class="ends"><span>따뜻하게</span><span>차갑게</span></div>
+    </div>
+    <p class="sec" style="top:672px"><span data-icon="lamp"></span>무드등</p>
+    <div class="card tg" style="top:696px"><button class="tgrow" data-toggle="mood"><span><b>무드등 켜기</b><small>침실 · 거실 무드등</small></span><span class="tog"></span></button></div>
+    <p class="sec" style="top:790px"><span data-icon="music"></span>소리</p>
+    <div class="card tg" style="top:814px"><button class="tgrow" data-toggle="sound"><span><b>배경 음악 틀기</b><small>스마트 스피커</small></span><span class="tog"></span></button>
+      <div class="chips2" data-single="music"><button data-v="부드러운 로파이">로파이</button><button data-v="잔잔한 재즈">재즈</button><button data-v="따뜻한 피아노">피아노</button><button data-v="잔잔한 빗소리">빗소리</button><button data-v="고요한 숲 소리">숲 소리</button></div></div>
+    <p class="sec" style="top:970px"><span data-icon="leaf"></span>향</p>
+    <div class="card tg" style="top:994px"><button class="tgrow" data-toggle="scent"><span><b>디퓨저 켜기</b><small>침실 디퓨저</small></span><span class="tog"></span></button>
+      <div class="chips2" data-single="scent"><button data-v="라벤더">라벤더</button><button data-v="시트러스">시트러스</button><button data-v="우디">우디</button><button data-v="코튼">코튼</button></div></div>
+    <p class="sec" style="top:1150px"><span data-icon="temp"></span>온도</p>
+    <div class="card sl" style="top:1174px"><div class="r"><span>실내 온도</span><span id="vAir">23°C</span></div>
+      <div class="range" data-range="air" data-min="18" data-max="28"><i class="rail"></i><i class="fill"></i><i class="knob"></i></div><div class="ends"><span>18°C</span><span>28°C</span></div></div>
+  </div></div>
+  <div class="fade-top"></div><div class="fade-bot"></div>
+  <div class="header"><button class="back" data-go="home" data-icon="back" aria-label="뒤로"></button><h2>분위기 조절</h2></div>
+  <button class="cta" style="top:764px" data-go="save" id="adjustSave">이 분위기 저장할게요</button>
+</section>
+
+<!-- 설정하기 -->
+<section class="screen" id="settings">
+  <div class="bg"></div>
+  <div class="scroller"><div class="content" style="height:960px">
+    <div class="card glass robot"><img src="assets/ongi-avatar.jpg" alt=""><b>ongi</b><small>연결됨  ·  배터리 82%  ·  방석 위에서 충전 중</small></div>
+    <button class="card glass short tapcard" style="top:243px" data-go="devices"><span class="c"><b>우리 집 기기</b><small data-text="roomShort">거실 · 침실 · 주방 · 현관</small></span><span class="v"><span data-text="devCount">13</span>개</span><span data-icon="more" style="opacity:.4"></span></button>
+    <button class="card glass short tapcard" style="top:323px" id="themeRow"><span class="c"><b>화면 색</b><small data-text="themeSub">오로라 · 은은한 그라데이션</small></span><span class="v" data-text="themeName">오로라</span><span data-icon="more" style="opacity:.4"></span></button>
+    <div class="card perm" style="top:403px"><p class="t">감지 권한</p>
+      <button class="prow" style="top:54px" data-perm="watch"><span class="pi" data-icon="watch"></span><p>스마트워치 심박</p><span class="st"></span></button>
+      <button class="prow" style="top:96px" data-perm="mic"><span class="pi" data-icon="mic"></span><p>기기 내 음성 분석</p><span class="st"></span></button>
+      <button class="prow" style="top:138px" data-perm="cam"><span class="pi" data-icon="cam"></span><p>카메라</p><span class="st"></span></button>
+      <button class="prow" style="top:180px" data-perm="gps"><span class="pi" data-icon="gps"></span><p>GPS 위치</p><span class="st"></span></button>
+    </div>
+    <div class="card auto" style="top:643px"><p class="t">자동화 허용</p><span class="abs" style="left:308px;top:18px;opacity:.4" data-icon="more"></span>
+      <button class="abs" style="left:0;top:40px;width:342px;height:36px" data-autom="a"><p style="top:12px">빛 · 온도 · 향</p><span class="m" style="top:12px"></span></button>
+      <button class="abs" style="left:0;top:76px;width:342px;height:36px" data-autom="b"><p style="top:12px">연락 · 주문 · 외부 공유</p><span class="m" style="top:12px"></span></button>
+    </div>
+    <div class="card privacy" style="top:791px"><b>음성 내용은 저장하지 않아요</b><p>상태 신호만 기기 안에서 분석해요  ›</p></div>
+  </div></div>
+  <div class="fade-top"></div>
+  <div class="header"><button class="back" data-go="home" data-icon="back" aria-label="뒤로"></button><h2>설정하기</h2></div>
+</section>
+
+<!-- 우리 집 기기 -->
+<section class="screen" id="devices">
+  <div class="bg"></div>
+  <div class="scroller"><div class="content" id="devContent" style="height:1120px">
+    <div class="dhead"><h3><b data-text="devCount">13</b>개의 기기가 연결돼 있어요</h3><p>분위기를 켜면 루미가 이 기기들을 함께 움직여요.</p></div>
+    <div id="roomGroups"></div>
+  </div></div>
+  <div class="fade-top"></div><div class="fade-bot"></div>
+  <div class="header"><button class="back" data-go="settings" data-icon="back" aria-label="뒤로"></button><h2>우리 집 기기</h2></div>
+  <button class="cta" style="top:764px" id="addMore">기기 추가하기</button>
+</section>
+
+</div></div>
+
+<script>
+(()=>{
+/* ================= icons (line icons, 1.6 stroke) ================= */
+const P = (d,s=24,c='#4a434a',w=1.6)=>`<svg class="ico" width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="${c}" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round">${d}</svg>`;
+const ICON = {
+  back: P('<path d="M15 5l-7 7 7 7"/>',24,'#1c1a29',2),
+  more: P('<path d="M9.5 6l6 6-6 6"/>',16,'#292929',2),
+  gear: P('<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 11-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 110-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 114 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 112.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 110 4h-.09a1.65 1.65 0 00-1.51 1z"/>',24,'#e0566b',1.7),
+  save: P('<path d="M12 4v10M8 10l4 4 4-4"/><path d="M5 15v3a2 2 0 002 2h10a2 2 0 002-2v-3"/>',20,'#e0566b',1.8),
+  adjust: P('<path d="M5 7h9M18 7h1M5 17h1M10 17h9"/><circle cx="16" cy="7" r="2"/><circle cx="8" cy="17" r="2"/>',20,'#6c6fcf',1.8),
+  plus: P('<path d="M12 5v14M5 12h14"/>',16,'#4a434a',1.8),
+  minus: P('<path d="M5 12h14"/>',16,'#4a434a',1.8),
+  bulb: P('<path d="M9 18h6M10 21h4M12 3a6 6 0 00-3.5 10.9c.6.5 1 1.2 1 2.1h5c0-.9.4-1.6 1-2.1A6 6 0 0012 3z"/>',14,'#292638',1.8),
+  lamp: P('<path d="M8 3h8l3 8H5l3-8zM12 11v8M8 21h8"/>',14,'#292638',1.8),
+  music: P('<path d="M9 18V6l10-2v12"/><circle cx="7" cy="18" r="2"/><circle cx="17" cy="16" r="2"/>',14,'#292638',1.8),
+  leaf: P('<path d="M5 19c0-8 6-13 14-14-1 8-6 14-14 14zM5 19l7-7"/>',14,'#292638',1.8),
+  temp: P('<path d="M10 14V5a2 2 0 014 0v9a4 4 0 11-4 0z"/>',14,'#292638',1.8),
+  watch: P('<rect x="6" y="6" width="12" height="12" rx="3"/><path d="M9 6l1-3h4l1 3M9 18l1 3h4l1-3M12 9v3l2 1"/>',18,'#403d54'),
+  mic: P('<rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0014 0M12 18v3"/>',18,'#403d54'),
+  cam: P('<path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/>',18,'#403d54'),
+  gps: P('<path d="M12 21s7-6.2 7-12a7 7 0 00-14 0c0 5.8 7 12 7 12z"/><circle cx="12" cy="9" r="2.5"/>',18,'#403d54'),
+  c_power: P('<path d="M12 3v8"/><path d="M7 6.5a7 7 0 1010 0"/>',18),
+  c_air: P('<path d="M4 9h11a3 3 0 10-3-3M4 13h14a3 3 0 11-3 3M4 17h7"/>',18),
+  c_door: P('<path d="M12 3l7 3v6c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V6z"/>',18),
+  c_clean: P('<path d="M4 20l6-14 4 6 2-3 4 11z"/>',18),
+  c_kitchen: P('<path d="M7 3v8M5 3v5a2 2 0 004 0V3M7 11v10M16 3c-2 1-3 4-3 7h3v11"/>',18),
+  c_media: P('<rect x="3" y="5" width="18" height="12" rx="2"/><path d="M8 21h8"/>',18),
+  c_sleep: P('<path d="M3 18V8M3 14h18v4M7 11a2 2 0 100-.01M11 11h8a2 2 0 012 2v1"/>',18),
+  c_pet: P('<path d="M12 20c-4 0-6-2-6-4 0-3 3-5 6-5s6 2 6 5c0 2-2 4-6 4z"/><circle cx="6" cy="8" r="1.8"/><circle cx="10" cy="5" r="1.8"/><circle cx="14" cy="5" r="1.8"/><circle cx="18" cy="8" r="1.8"/>',18),
+  c_safe: P('<path d="M13 3L5 13h6l-1 8 8-10h-6z"/>',18),
+  c_service: P('<path d="M4 10l8-6 8 6v10H4z"/><path d="M9 20v-6h6v6"/>',18),
+};
+document.querySelectorAll('[data-icon]').forEach(el=>{ el.innerHTML = ICON[el.dataset.icon] || ''; });
+
+/* ================= data ================= */
+const AUTO = [
+  {n:'거실 조명', room:'거실', s:'켜짐 · 40%', ic:'c_power'},
+  {n:'스마트 스피커', room:'거실', s:'재즈 재생 중', ic:'c_media'},
+  {n:'공기청정기', room:'거실', s:'조용히', ic:'c_air'},
+  {n:'냉장고', room:'주방', s:'3°C', ic:'c_kitchen'},
+  {n:'난방 센서', room:'침실', s:'22°C', ic:'c_air'},
+  {n:'현관 센서', room:'현관', s:'닫힘', ic:'c_door'},
+];
+const CATS = [
+  {k:'조명·전원', ic:'c_power', room:'거실', items:['조명','전구','스위치','플러그','멀티탭','콘센트','무드등','LED 스트립','조광기','전력 측정기']},
+  {k:'공기·온도', ic:'c_air', room:'거실', items:['에어컨','냉방 조절기','보일러','온도 조절기','가습기','제습기','서큘레이터','환기 시스템','온습도 센서','선풍기']},
+  {k:'출입·보안', ic:'c_door', room:'현관', items:['도어락','창문 센서','홈캠','비디오 도어벨','동작 센서','사이렌','스마트 금고','방범 조명','차고 문']},
+  {k:'생활·청소', ic:'c_clean', room:'거실', items:['로봇청소기','물걸레 청소기','세탁기','건조기','의류관리기','스마트 커튼','블라인드','디퓨저','스마트 거울']},
+  {k:'주방·식생활', ic:'c_kitchen', room:'주방', items:['정수기','전기밥솥','전자레인지','오븐','인덕션','식기세척기','커피머신','에어프라이어','스마트 저울','김치냉장고']},
+  {k:'미디어·네트워크', ic:'c_media', room:'거실', items:['TV','사운드바','블루투스 스피커','셋톱박스','와이파이 공유기','메시 와이파이','프로젝터','게임기','스마트 디스플레이']},
+  {k:'건강·수면', ic:'c_sleep', room:'침실', items:['매트리스 센서','스마트워치','체중계','혈압계','수면 조명','백색소음기','안마의자','스마트 베개']},
+  {k:'반려·식물', ic:'c_pet', room:'거실', items:['자동 급식기','자동 급수기','펫캠','화분 센서','자동 물주기','식물 조명']},
+  {k:'안전·에너지', ic:'c_safe', room:'현관', items:['화재 감지기','가스 감지기','누수 센서','일산화탄소 감지기','스마트 미터','태양광 패널','배터리 저장 장치','전기차 충전기','비상 버튼']},
+  {k:'생활 서비스', ic:'c_service', room:'현관', opt:true, items:['택배 알림','관리비 조회','주차 알림','엘리베이터 호출']},
+];
+const ROOM_OF = {'무드등':'침실','가습기':'침실','제습기':'침실','디퓨저':'침실','수면 조명':'침실','스마트 커튼':'거실','블라인드':'거실','세탁기':'다용도실','건조기':'다용도실','의류관리기':'침실','보일러':'다용도실','에어컨':'거실','냉방 조절기':'거실','스마트 베개':'침실','자동 급식기':'거실','방범 조명':'현관'};
+const ROOM_ORDER = ['거실','주방','현관','침실','다용도실'];
+const CAT_OF = {}; CATS.forEach(c=>c.items.forEach(i=>CAT_OF[i]=c));
+const DEFAULT_MOODS = [
+  {feel:'몸이 지쳤을 때', t:'하루 끝의 포근함', d:'지친 몸에 느긋한 여백을 주세요', s:'조명 30% · 부드러운 로파이', img:'tired', hue:0},
+  {feel:'편안할 때', t:'지금의 편안함', d:'좋은 흐름을 은은하게 이어가요', s:'조명 50% · 잔잔한 재즈', img:'calm', hue:0},
+  {feel:'마음이 가라앉을 때', t:'마음에 작은 온기', d:'나만의 속도로 쉬어가는 시간', s:'조명 40% · 따뜻한 피아노', img:'tired', hue:-45},
+  {feel:'심장이 빨리 뛸 때', t:'잠시, 천천히', d:'주변 자극을 줄인 조용한 분위기', s:'조명 25% · 잔잔한 빗소리', img:'calm', hue:-18},
+  {feel:'긴장될 때', t:'여유를 찾는 틈', d:'분주한 순간에 잠깐의 쉼표를', s:'조명 35% · 고요한 숲 소리', img:'today', hue:25},
+  {feel:'기분 좋게 설렐 때', t:'기분 좋은 반짝임', d:'가벼운 설렘을 공간에도 담아요', s:'조명 70% · 산뜻한 어쿠스틱', img:'calm', hue:22},
+];
+const IMG = {tired:'assets/mood-tired.jpg', calm:'assets/mood-calm.jpg', today:'assets/mood-today.jpg'};
+const PERM_DEF = {watch:true, mic:true, cam:false, gps:true};
+const ADJ_DEF = {room:'거실', bright:40, temp:2700, air:23, mood:true, sound:false, scent:false, music:'부드러운 로파이', scent2:'라벤더'};
+
+/* ================= visitor state ================= */
+let S;
+function freshState(){
+  return {theme:'aurora', added:[], picks:new Set(), moods:DEFAULT_MOODS.map(m=>({...m})), justSaved:null, lit:-1,
+          perms:{...PERM_DEF}, autom:{a:true,b:false}, adj:{...ADJ_DEF}, adjTouched:false, returnTo:'theme', savedIdx:0};
+}
+S = freshState();
+
+const allDevices = ()=> [...AUTO.map(d=>({...d,auto:true})), ...S.added.map(n=>({n, room:ROOM_OF[n]||CAT_OF[n].room, s:'연결됨', ic:CAT_OF[n].ic, nw:true}))];
+const roomsUsed = ()=> ROOM_ORDER.filter(r=>allDevices().some(d=>d.room===r));
+function bindTexts(){
+  const devs = allDevices(), rooms = roomsUsed();
+  const names = devs.map(d=>d.n);
+  const devLine = (()=>{ const f=names[0].replace('거실 ',''), l=names[names.length-1];
+    return names.length>6 ? `${f}부터 ${l}까지 ${names.length}개 기기를 둘러봤어요.` : '조명과 스피커부터 무드등까지 하나씩 둘러봤어요.'; })();
+  const T = {
+    autoCount: AUTO.length, devCount: devs.length, roomCount: rooms.length,
+    roomLine: rooms.join('  ·  '), roomShort: rooms.join(' · '), devLine,
+    themeName: S.theme==='white'?'화이트':'오로라', themeSub: S.theme==='white'?'화이트 · 깔끔한 흰 배경':'오로라 · 은은한 그라데이션',
+    moodCount: `분위기 ${S.moods.length}개`, userName:'지안'
+  };
+  document.querySelectorAll('[data-text]').forEach(el=>{ const v=T[el.dataset.text]; if (v!==undefined) el.textContent=v; });
+}
+function applyTheme(){ document.body.classList.toggle('white', S.theme==='white'); document.querySelector('meta[name=theme-color]').content = S.theme==='white'?'#ffffff':'#f5f7ff'; bindTexts(); }
+
+/* ================= found / auto grids ================= */
+const gridHTML = (pop)=> AUTO.map((d,i)=>`<div class="devbox${pop?' pop':''}" style="animation-delay:${i*90}ms"><i></i>${d.n}</div>`).join('');
+document.getElementById('autoGrid').innerHTML = gridHTML(false);
+
+/* ================= pick screen ================= */
+const catList = document.getElementById('catList');
+catList.innerHTML = CATS.map((c,ci)=>`<div class="cat${ci===0?' open':''}" data-ci="${ci}">
+  <button class="cat-h"><span class="ci">${ICON[c.ic]}</span><span class="t">${c.k}  ${c.opt?'·  선택':c.items.length}</span><span class="pm">${ICON.plus}</span></button>
+  <div class="cat-b">${c.items.map(n=>`<button class="chip" data-dev="${n}"><i></i>${n}</button>`).join('')}</div></div>`).join('');
+function syncCats(){ catList.querySelectorAll('.cat').forEach(c=>{ c.querySelector('.pm').innerHTML = c.classList.contains('open')?ICON.minus:ICON.plus; }); }
+syncCats();
+catList.addEventListener('click',e=>{
+  const h = e.target.closest('.cat-h');
+  if (h){ h.parentElement.classList.toggle('open'); syncCats(); return; }
+  const ch = e.target.closest('.chip'); if (!ch) return;
+  const n = ch.dataset.dev;
+  if (S.picks.has(n)) S.picks.delete(n); else S.picks.add(n);
+  ch.classList.toggle('sel', S.picks.has(n));
+  document.getElementById('pickCount').textContent = S.picks.size;
+});
+document.querySelectorAll('#pick .tabs button').forEach(b=>b.addEventListener('click',()=>{
+  document.querySelectorAll('#pick .tabs button').forEach(x=>x.classList.toggle('on',x===b));
+  document.getElementById('pick').classList.toggle('pick-auto', b.dataset.tab==='auto');
+}));
+const pickEl = document.getElementById('pick');
+document.getElementById('openSheet').addEventListener('click',()=>{
+  const arr=[...S.picks];
+  document.getElementById('sheetN').textContent = arr.length+'개';
+  document.getElementById('sheetBox').innerHTML = arr.length ? arr.map(n=>`<span><i></i>${n}</span>`).join('') : '<p class="empty">아직 고른 기기가 없어요.</p>';
+  document.getElementById('confirmAdd').style.opacity = arr.length? '1':'.5';
+  pickEl.classList.add('show-sheet');
+});
+const closeSheet = ()=>pickEl.classList.remove('show-sheet');
+document.getElementById('closeSheet').addEventListener('click',closeSheet);
+document.getElementById('dim').addEventListener('click',closeSheet);
+document.getElementById('confirmAdd').addEventListener('click',()=>{
+  if (!S.picks.size) return;
+  S.picks.forEach(n=>{ if(!S.added.includes(n)) S.added.push(n); });
+  bindTexts(); closeSheet();
+  setTimeout(()=>show(S.returnTo), 250);
+});
+document.getElementById('later').addEventListener('click',()=>show(S.returnTo));
+
+/* ================= theme ================= */
+let themePick = 'aurora';
+document.getElementById('themeOk').addEventListener('click',()=>{ S.theme = themePick; applyTheme(); show('explore'); });
+
+/* ================= single-select groups ================= */
+document.querySelectorAll('[data-single]').forEach(g=>{
+  g.addEventListener('click',e=>{
+    const b = e.target.closest('button'); if (!b || !g.contains(b) || b.parentElement!==g) return;
+    g.querySelectorAll(':scope > button').forEach(x=>x.classList.toggle('on',x===b));
+    const k = g.dataset.single, v = b.dataset.v;
+    if (k==='theme') themePick = v;
+    else if (k==='room') { S.adj.room=v; S.adjTouched=true; }
+    else if (k==='music') { S.adj.music=v; S.adj.sound=true; syncToggles(); S.adjTouched=true; }
+    else if (k==='scent') { S.adj.scent2=v; S.adj.scent=true; syncToggles(); S.adjTouched=true; }
+  });
+});
+function setSingle(key,val){ const g=document.querySelector(`[data-single="${key}"]`); g.querySelectorAll(':scope > button').forEach(x=>x.classList.toggle('on',x.dataset.v===val)); }
+
+/* ================= explore (114) : 0.09s per 1% ================= */
+const ROOMS = [
+  {k:'거실', l:47, t:35, s:106}, {k:'주방', l:258, t:58, s:92}, {k:'현관', l:53, t:279, s:78}, {k:'침실', l:256, t:256, s:88}
+];
+let exTimer=null;
+function startExplore(){
+  const devs = allDevices();
+  const sub = r => { const n = devs.filter(d=>d.room===r).map(d=>d.n.replace('거실 ','').replace('스마트 ','')); return n.slice(0,3).join(' · ') || '둘러보는 중'; };
+  document.getElementById('rooms').innerHTML = ROOMS.map(r=>`<div class="room" style="left:${r.l}px;top:${r.t}px;width:${r.s}px;height:${r.s}px"><b>${r.k}</b><small>${sub(r.k)}</small></div>`).join('');
+  const roomsEl=[...document.querySelectorAll('#rooms .room')], fill=document.getElementById('pfill');
+  const total = devs.length, rCount = roomsUsed().length;
+  let p = 0; clearInterval(exTimer);
+  const tick = ()=>{
+    fill.style.width = (132*p/100)+'px';
+    const shownRooms = Math.min(4, Math.floor(p/22));
+    roomsEl.forEach((r,i)=>r.classList.toggle('on', i<shownRooms));
+    document.getElementById('exNum').textContent = `찾은 공간 ${Math.min(rCount,Math.round(rCount*p/100))}곳 · 기기 ${Math.round(total*p/100)}개`;
+    document.getElementById('exMsg').textContent = p<35?'집 안을 둘러보기 시작했어요': p<100?'공간마다 기기를 이어 보고 있어요':'집을 한 바퀴 다 둘러봤어요';
+    if (p>=100){ clearInterval(exTimer); exTimer=setTimeout(()=>show('ready', 600), 900); return; }
+    p++;
+  };
+  tick(); exTimer = setInterval(tick, 90);
+}
+
+/* ================= home greeting ================= */
+function greet(){ const h=new Date().getHours(); document.getElementById('hello').textContent = h<5?'편안한 밤이에요':h<11?'좋은 아침이에요':h<17?'좋은 오후예요':h<22?'좋은 저녁이에요':'편안한 밤이에요'; }
+
+/* ================= save mood ================= */
+const nameIn = document.getElementById('moodName');
+document.getElementById('askTog').addEventListener('click',e=>e.currentTarget.classList.toggle('on'));
+const fmtSetting = ()=>{ const a=S.adj; return `조명 ${a.bright}% · ${a.sound?a.music:(a.temp+'K')}`; };
+document.getElementById('saveMood').addEventListener('click',()=>{
+  const name = (nameIn.value.trim() || nameIn.placeholder);
+  const when = document.querySelector('[data-single="when"] .on');
+  S.moods.unshift({feel: when && when.dataset.v==='manual' ? '내가 고를 때' : '지금과 비슷할 때', t:name, d: S.adjTouched? `${S.adj.room}에 맞춘 나만의 분위기` : '오늘의 온기를 그대로 담았어요', s: fmtSetting(), img:'today', hue:0, isNew:true});
+  S.moods.forEach((m,i)=>{ if(i) m.isNew=false; });
+  S.justSaved = name; S.savedIdx = 0;
+  show('saved');
+});
+function renderApplyPts(){
+  const pts = S.moods.slice(0,3).map((m,i)=>({d: m.isNew? '방금' : ['26.03.10','26.04.17','26.05.26'][i]||'', t:m.t}));
+  const L=[25,133,240], C=['#ffd3b8','#ffa79d','#ff6b6b'];
+  document.getElementById('applyPts').innerHTML = pts.map((p,i)=>`<i class="abs" style="left:${L[i]+31}px;top:62px;width:14px;height:14px;border-radius:50%;background:${C[i]}"></i>
+    <b class="abs" style="left:${L[i]}px;top:96px;width:76px;text-align:center;font-family:var(--font2);font-weight:800;font-size:11px;color:#42405e">${p.d}</b>
+    <span class="abs" style="left:${L[i]-6}px;top:117px;width:88px;text-align:center;font-weight:500;font-size:10px;color:#6b6b8a;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${p.t}</span>`).join('');
+}
+
+/* ================= saved carousel ================= */
+const track=document.getElementById('track'), pager=document.getElementById('pager');
+let idx=0;
+const imgTag = m => `<img src="${IMG[m.img]}" alt="" style="${m.hue?`filter:hue-rotate(${m.hue}deg) saturate(1.1)`:''}">`;
+function renderSaved(){
+  const n = document.getElementById('notice');
+  n.style.display = S.justSaved ? 'flex':'none';
+  document.getElementById('noticeTxt').textContent = S.justSaved ? `‘${S.justSaved}’을 저장했어요` : '';
+  document.getElementById('sum1').style.top = S.justSaved ? '208px' : '160px';
+  document.getElementById('slider').style.top = S.justSaved ? '237px' : '200px';
+  track.innerHTML = S.moods.map((m,i)=>`<div class="mcard" data-i="${i}"><div class="img">${imgTag(m)}</div>
+    <div class="txt"><em>${m.feel}</em><b>${m.t}</b><span>${m.d}</span><small>${m.s}</small></div>
+    <button class="go${S.lit===i?' lit':''}" data-lit="${i}">${S.lit===i?'켜져 있어요':'이 분위기 켜기'}</button></div>`).join('');
+  pager.innerHTML = S.moods.map((_,i)=>`<button data-i="${i}" aria-label="${i+1}"></button>`).join('');
+  idx = Math.min(S.savedIdx, S.moods.length-1); go(idx, true);
+}
+function go(i, instant){
+  idx = Math.max(0, Math.min(S.moods.length-1, i));
+  if (instant){ track.style.transition='none'; }
+  track.style.transform = `translateX(${-idx*284}px)`;
+  if (instant){ void track.offsetWidth; track.style.transition=''; }
+  track.querySelectorAll('.mcard').forEach((c,k)=>c.classList.toggle('cur',k===idx));
+  pager.querySelectorAll('button').forEach((b,k)=>b.classList.toggle('on',k===idx));
+}
+pager.addEventListener('click',e=>{ const b=e.target.closest('button'); if(b) go(+b.dataset.i); });
+let sx=null, moved=false;
+const slider=document.getElementById('slider');
+slider.addEventListener('pointerdown',e=>{ sx=e.clientX; moved=false; });
+slider.addEventListener('pointermove',e=>{ if(sx!==null && Math.abs(e.clientX-sx)>8) moved=true; });
+slider.addEventListener('pointerup',e=>{
+  if (sx===null) return; const dx=e.clientX-sx; sx=null;
+  if (moved){ go(idx + (dx<0?1:-1)); return; }
+  const lit = e.target.closest('[data-lit]');
+  const card = e.target.closest('.mcard');
+  if (lit && +lit.dataset.lit===idx){ S.lit = S.lit===idx ? -1 : idx; track.querySelectorAll('.go').forEach((g,k)=>{ g.classList.toggle('lit',S.lit===k); g.textContent = S.lit===k?'켜져 있어요':'이 분위기 켜기'; });
+    toast(S.lit===idx?`‘${S.moods[idx].t}’ 분위기를 켰어요`:'분위기를 껐어요'); return; }
+  if (card){ const ci=+card.dataset.i; if (ci!==idx) go(ci); return; }
+  const r = slider.getBoundingClientRect(); const x = (e.clientX - r.left) / (r.width/393);
+  go(idx + (x<130?-1:1));
+});
+slider.addEventListener('pointercancel',()=>{ sx=null; });
+let tt=null; function toast(t){ const el=document.getElementById('toast'); el.textContent=t; el.classList.add('on'); clearTimeout(tt); tt=setTimeout(()=>el.classList.remove('on'),1600); }
+
+/* ================= list ================= */
+function renderList(){
+  document.getElementById('mlist').innerHTML = S.moods.map((m,i)=>`<button class="mrow" data-i="${i}"><span class="thumb">${imgTag(m)}</span>
+    <span class="c"><em>${m.feel}</em><b>${m.t}</b><span>${m.d}<br>${m.s} ···</span></span>${m.isNew?'<span class="new">NEW</span>':''}</button>`).join('');
+  document.getElementById('listContent').style.height = Math.max(852, 180 + S.moods.length*104 + 170)+'px';
+}
+document.getElementById('mlist').addEventListener('click',e=>{ const r=e.target.closest('.mrow'); if(!r) return; S.savedIdx=+r.dataset.i; S.justSaved=null; show('saved'); });
+
+/* ================= adjust (sliders / toggles) ================= */
+const RANGES = {bright:{el:'vBright',f:v=>v+'%'}, temp:{el:'vTemp',f:v=>v+'K',step:100}, air:{el:'vAir',f:v=>v+'°C'}};
+function paintRange(r){
+  const k=r.dataset.range, min=+r.dataset.min, max=+r.dataset.max, v=S.adj[k];
+  const pct = (v-min)/(max-min)*100;
+  r.querySelector('.fill').style.width = pct+'%'; r.querySelector('.knob').style.left = pct+'%';
+  document.getElementById(RANGES[k].el).textContent = RANGES[k].f(v);
+}
+document.querySelectorAll('[data-range]').forEach(r=>{
+  const set = e=>{ const b=r.getBoundingClientRect(); const t=Math.max(0,Math.min(1,(e.clientX-b.left)/b.width));
+    const min=+r.dataset.min, max=+r.dataset.max, st=RANGES[r.dataset.range].step||1;
+    S.adj[r.dataset.range] = Math.round((min + t*(max-min))/st)*st; S.adjTouched=true; paintRange(r); };
+  r.addEventListener('pointerdown',e=>{ r.setPointerCapture(e.pointerId); set(e); });
+  r.addEventListener('pointermove',e=>{ if (r.hasPointerCapture(e.pointerId)) set(e); });
+});
+function syncToggles(){ document.querySelectorAll('[data-toggle]').forEach(b=>b.querySelector('.tog').classList.toggle('on', !!S.adj[b.dataset.toggle])); }
+document.querySelectorAll('[data-toggle]').forEach(b=>b.addEventListener('click',()=>{ const k=b.dataset.toggle; S.adj[k]=!S.adj[k]; S.adjTouched=true; syncToggles(); }));
+
+/* ================= settings ================= */
+function renderSettings(){
+  document.querySelectorAll('[data-perm]').forEach(b=>{ const on=S.perms[b.dataset.perm]; const st=b.querySelector('.st'); st.classList.toggle('on',on); st.textContent=on?'켜짐':'꺼짐'; });
+  const A = {a:['자동 실행','#5e948f','항상 묻기','#cc4d63'], b:['자동 실행','#5e948f','항상 묻기','#cc4d63']};
+  document.querySelectorAll('[data-autom]').forEach(b=>{ const on=S.autom[b.dataset.autom]; const m=b.querySelector('.m'); m.textContent = on?'자동 실행':'항상 묻기'; m.style.color = on?'#5e948f':'#cc4d63'; });
+  bindTexts();
+}
+document.querySelectorAll('[data-perm]').forEach(b=>b.addEventListener('click',()=>{ S.perms[b.dataset.perm]=!S.perms[b.dataset.perm]; renderSettings(); }));
+document.querySelectorAll('[data-autom]').forEach(b=>b.addEventListener('click',()=>{ S.autom[b.dataset.autom]=!S.autom[b.dataset.autom]; renderSettings(); }));
+document.getElementById('themeRow').addEventListener('click',()=>{ S.theme = S.theme==='white'?'aurora':'white'; applyTheme(); renderSettings(); });
+
+/* ================= devices ================= */
+function renderDevices(){
+  const devs = allDevices(); let y = 222; let html='';
+  roomsUsed().forEach(r=>{
+    const list = devs.filter(d=>d.room===r);
+    html += `<div class="rgroup" style="top:${y}px"><p class="rt">${r}<span>${list.length}</span></p><div class="card glass rlist" style="position:relative">${
+      list.map(d=>`<div class="drow"><span style="opacity:.8">${ICON[d.ic]}</span><span class="n">${d.n}${d.nw?'<span class="nw">NEW</span>':''}</span><span class="s">${d.s}</span><span style="opacity:.4">${ICON.more}</span></div>`).join('')}</div></div>`;
+    y += 30 + list.length*46 + 4 + 18;
+  });
+  document.getElementById('roomGroups').innerHTML = html;
+  document.getElementById('devContent').style.height = Math.max(852, y + 160)+'px';
+  bindTexts();
+}
+document.getElementById('addMore').addEventListener('click',()=>{ S.returnTo='devices'; show('pick'); });
+
+/* ================= navigation (dissolve) ================= */
+let current=null, autoTimer=null, busy=false;
+function show(id, dur=400){
+  const next=document.getElementById(id);
+  if (!next || next===current || busy) return;
+  clearTimeout(autoTimer); clearInterval(exTimer); clearTimeout(exTimer);
+  const prev=current;
+  resetScreen(next); onEnter(next);
+  if (!prev){ next.classList.add('active'); current=next; return; }
+  busy=true;
+  next.style.transition='none'; next.style.opacity='0'; next.classList.add('entering'); void next.offsetWidth;
+  next.style.transition=`opacity ${dur}ms cubic-bezier(.42,0,.58,1)`; next.style.opacity='1';
+  setTimeout(()=>{ prev.classList.remove('active'); next.classList.remove('entering'); next.classList.add('active'); next.style.transition=''; next.style.opacity=''; current=next; busy=false; }, dur+20);
+}
+/* every visit starts from the frame's default state (selections cleared) */
+function resetScreen(s){
+  s.querySelectorAll('.scroller, .catlist').forEach(x=>x.scrollTop=0);
+  switch(s.id){
+    case 'found': document.getElementById('foundGrid').innerHTML = gridHTML(true); break;
+    case 'pick':
+      S.picks.clear(); document.getElementById('pickCount').textContent='0';
+      s.classList.remove('show-sheet','pick-auto');
+      s.querySelectorAll('.chip.sel').forEach(c=>c.classList.remove('sel'));
+      s.querySelectorAll('.tabs button').forEach(b=>b.classList.toggle('on',b.dataset.tab==='pick'));
+      s.querySelectorAll('.cat').forEach((c,i)=>c.classList.toggle('open',i===0)); syncCats();
+      break;
+    case 'theme': themePick='aurora'; setSingle('theme','aurora'); break;
+    case 'save':
+      nameIn.value=''; setSingle('when','auto');
+      document.getElementById('askTog').classList.add('on');
+      renderApplyPts(); break;
+    case 'saved': renderSaved(); break;
+    case 'list': renderList(); break;
+    case 'adjust':
+      S.adj={...ADJ_DEF}; S.adjTouched=false;
+      setSingle('room',S.adj.room); setSingle('music',''); setSingle('scent','');
+      s.querySelectorAll('[data-range]').forEach(paintRange); syncToggles(); break;
+    case 'settings': renderSettings(); break;
+    case 'devices': renderDevices(); break;
+    case 'home': greet(); S.justSaved=null; S.returnTo='theme'; bindTexts(); break;
+    case 'ready': bindTexts(); break;
+  }
+  if (s.id!=='saved' && s.id!=='list' && s.id!=='save') { /* keep */ }
+}
+function onEnter(s){
+  if (s.dataset.auto) autoTimer=setTimeout(()=>show(s.dataset.auto, 500), +s.dataset.autoDelay);
+  if (s.id==='explore') startExplore();
+}
+document.addEventListener('click',e=>{
+  const t=e.target.closest('[data-go]'); if(!t) return;
+  if (t.dataset.go==='saved' && t.id==='applyCard') { S.justSaved=null; S.savedIdx=0; }
+  show(t.dataset.go);
+});
+/* list → saved keeps index; saved → list → back keeps */
+nameIn.addEventListener('keydown',e=>{ if(e.key==='Enter') nameIn.blur(); });
+
+/* ================= exhibition: 60s without touch → Home, visitor settings cleared ================= */
+const IDLE_MS = 60000; let idleTimer=null;
+function armIdle(){
+  clearTimeout(idleTimer);
+  idleTimer=setTimeout(()=>{
+    if (current && current.id!=='home'){
+      if (document.activeElement) document.activeElement.blur();
+      S = freshState(); applyTheme();
+      show('home', 1100);
+    }
+    armIdle();
+  }, IDLE_MS);
+}
+['pointerdown','touchstart','keydown','wheel','scroll'].forEach(ev=>addEventListener(ev, armIdle, {passive:true, capture:true}));
+armIdle();
+
+applyTheme();
+const start=(location.hash||'').slice(1);
+show(document.getElementById(start)?start:'welcome');
+
+/* ================= fit device to window =================
+   desktop : 393×852 phone frame, centered
+   phone   : full-bleed; width = 393 design px, height follows the phone.
+             Header stays on top, CTA stays at the bottom, the middle stretches/compresses. */
+const vp=document.getElementById('viewport'), dev=document.getElementById('device');
+const movers=[], stretch=[];
+document.querySelectorAll('.screen').forEach(sc=>{
+  [...sc.children].forEach(el=>{
+    if (el.classList.contains('bg')||el.classList.contains('scroller')||el.classList.contains('layer')||el.classList.contains('home-ind')||el.classList.contains('fade-top')||el.classList.contains('fade-bot')||el.classList.contains('toast')) return;
+    if (el.classList.contains('stretch')) { stretch.push([el, el.offsetTop, el.offsetHeight]); return; }
+    movers.push([el, el.offsetTop]);
+  });
+});
+const TOP_Y=146, BOT_Y=700, H_MIN=760, TOP_CUT=40;
+const probe=document.getElementById('safe-probe');
+const lvh=document.createElement('div'); lvh.style.cssText='position:absolute;left:0;top:0;width:0;height:100vh;height:100lvh;visibility:hidden;pointer-events:none'; document.body.appendChild(lvh);
+function fit(){
+  const vv=window.visualViewport, w=innerWidth;
+  const standalone = navigator.standalone===true || matchMedia('(display-mode: standalone)').matches;
+  let h=Math.round(Math.max(innerHeight, vv?vv.height:0, document.documentElement.clientHeight));
+  const phone=(w<600 && h>w) || /[?&]kiosk/.test(location.search);
+  if (phone){ h=Math.max(h, lvh.offsetHeight); if (standalone && screen.height>screen.width && w<=screen.width+1) h=Math.max(h, screen.height); }
+  document.documentElement.style.height=h+'px'; document.body.style.height=h+'px';
+  if (!phone){
+    const sc=Math.min((w-48)/393,(h-48)/852,1.25);
+    Object.assign(vp.style,{position:'absolute',width:'393px',height:'852px',transformOrigin:'0 0',left:((w-393*sc)/2)+'px',top:((h-852*sc)/2)+'px',transform:`scale(${sc})`});
+    dev.style.setProperty('--radius','44px');
+    movers.forEach(([el])=>el.style.translate=''); stretch.forEach(([el,y,hh])=>{el.style.translate='';el.style.height=hh+'px';});
+    document.querySelectorAll('.scroller .content').forEach(c=>c.style.translate='');
+    document.querySelectorAll('.header').forEach(c=>c.style.translate='');
+    return;
+  }
+  let safeTop=parseFloat(getComputedStyle(probe).paddingTop)||0;
+  const full = standalone || (screen.height>screen.width && h>=screen.height-2);
+  if (full && safeTop<20) safeTop=50;
+  const s=Math.min(w/393, h/H_MIN), W=w/s, H=h/s, ox=(W-393)/2;
+  Object.assign(vp.style,{position:'absolute',left:'0px',top:'0px',width:W+'px',height:H+'px',transformOrigin:'0 0',transform:`scale(${s})`});
+  dev.style.setProperty('--radius','0px');
+  const topShift = safeTop>20 ? Math.min(0, safeTop/s - 54) : -TOP_CUT;
+  const botShift = H-852;
+  const dyAt = y=>{ if (y<=TOP_Y) return topShift; const t=Math.max(0,Math.min(1,(y-TOP_Y)/(BOT_Y-TOP_Y))); return topShift+(botShift-topShift)*t; };
+  movers.forEach(([el,y])=>{ el.style.translate=`${ox}px ${el.classList.contains('header')?topShift:dyAt(y)}px`; });
+  stretch.forEach(([el,y,hh])=>{ const a=dyAt(y), b=dyAt(y+hh); el.style.translate=`${ox}px ${a}px`; el.style.height=(hh+b-a)+'px'; });
+  document.querySelectorAll('.scroller .content').forEach(c=>c.style.translate=`${ox}px ${topShift}px`);
+}
+fit(); setTimeout(fit,300); setTimeout(fit,1200);
+addEventListener('resize',fit); addEventListener('pageshow',fit); addEventListener('orientationchange',()=>setTimeout(fit,250));
+if (window.visualViewport) visualViewport.addEventListener('resize',fit);
+['gesturestart','gesturechange'].forEach(ev=>document.addEventListener(ev,e=>e.preventDefault(),{passive:false}));
+document.addEventListener('touchmove',e=>{ if (e.touches.length>1 || !e.target.closest('.scroller, .catlist, .sheet .box, .range, .slider')) e.preventDefault(); },{passive:false});
+})();
+</script>
+</body>
+</html>
