@@ -604,30 +604,57 @@ img{display:block;-webkit-user-drag:none;user-select:none}
   const TOP_Y = 115, BOT_Y = 678, H_MIN = 780, TOP_CUT = 44, STATUS_H = 60;
   const probe = document.getElementById('safe-probe');
   const forceKiosk = /[?&]kiosk/.test(location.search);           // test switch: act like the home-screen app
-  /* Always show the whole Figma frame (393×852, with its own 9:41 status bar and home indicator)
-     as a phone mock, scaled to fit inside the screen's safe area — on the exhibition iPhone 16 as well. */
+  /* Phones: full-bleed, no device frame.
+     The phone's own status bar (time / battery) is shown instead of the design's 9:41 bar:
+     - page drawn under the status bar (iPhone home-screen app, iOS full-screen Safari): the real bar sits in the
+       design's 60px status zone, so on an iPhone 16 (393×852 = Figma frame) the layout is exactly 1:1.
+     - page below the status bar (normal browser): the empty status zone is trimmed.
+     Desktop: the frame is shown as a phone mock. */
+  const lvhProbe = document.createElement('div');
+  lvhProbe.style.cssText = 'position:fixed;left:0;top:0;width:0;height:100vh;height:100lvh;visibility:hidden;pointer-events:none';
+  document.body.appendChild(lvhProbe);
   function fit(){
     const vv = window.visualViewport;
     const w = innerWidth;
-    let h = Math.round(Math.max(innerHeight, vv ? vv.height : 0, document.documentElement.clientHeight));
-    // iOS home-screen app: innerHeight leaves out the status bar although the page covers the whole screen
     const standalone = navigator.standalone === true || matchMedia('(display-mode: standalone)').matches;
-    if (standalone && screen.height > screen.width && w <= screen.width + 1) h = Math.max(h, screen.height);
+    let h = Math.round(Math.max(innerHeight, vv ? vv.height : 0, document.documentElement.clientHeight));
+    const phone = (w < 600 && h > w) || forceKiosk;
+    if (phone){
+      h = Math.max(h, lvhProbe.offsetHeight);                                  // fill the whole screen (no band at the bottom)
+      if (standalone && screen.height > screen.width && w <= screen.width + 1) h = Math.max(h, screen.height);
+    }
     document.body.style.height = h + 'px';
-    const cs = getComputedStyle(probe);
-    const safeTop = parseFloat(cs.paddingTop)||0, safeBottom = parseFloat(cs.paddingBottom)||0;
-    const small = w < 600;
-    const m = small ? 12 : 24;
-    const availW = w - m*2, availH = h - safeTop - safeBottom - m*2;
-    const sc = Math.min(availW/393, availH/852, 1.25);
-    vp.classList.remove('phone');
-    Object.assign(vp.style, {position:'fixed', width:'393px', height:'852px', transformOrigin:'0 0',
-      left: ((w - 393*sc)/2) + 'px', top: (safeTop + (h - safeTop - safeBottom - 852*sc)/2) + 'px', transform:`scale(${sc})`});
-    dev.style.setProperty('--radius','44px');
-    movers.forEach(([el])=>{ el.style.translate=''; });
-    document.querySelectorAll('.map').forEach(m2=>{ m2.style.height=m2.style.width=m2.style.left=''; });
+    vp.classList.toggle('phone', phone);
+    if (!phone){
+      const sc = Math.min((w-48)/393, (h-48)/852, 1.25);
+      Object.assign(vp.style, {position:'fixed', width:'393px', height:'852px', transformOrigin:'0 0',
+        left:((w-393*sc)/2)+'px', top:((h-852*sc)/2)+'px', transform:`scale(${sc})`});
+      dev.style.setProperty('--radius','44px');
+      movers.forEach(([el])=>{ el.style.translate=''; });
+      document.querySelectorAll('.map').forEach(m=>{ m.style.height=m.style.width=m.style.left=''; });
+      return;
+    }
+    let safeTop = parseFloat(getComputedStyle(probe).paddingTop) || 0;
+    const fullScreen = standalone || forceKiosk || (screen.height > screen.width && h >= screen.height - 2);
+    if (fullScreen && safeTop < 20) safeTop = (screen.width === 393 && screen.height === 852) ? 59 : 50;  // iPhone 16 status bar
+    const underStatusBar = safeTop > 20;
+    const s = Math.min(w/393, h/H_MIN);
+    const W = w/s, H = h/s, ox = (W-393)/2;
+    Object.assign(vp.style, {position:'fixed', left:'0px', top:'0px', width:W+'px', height:H+'px', transformOrigin:'0 0', transform:`scale(${s})`});
+    dev.style.setProperty('--radius','0px');
+    const topShift = underStatusBar ? Math.min(0, safeTop/s - STATUS_H) : -TOP_CUT;
+    const botShift = H - 852;
+    movers.forEach(([el,y])=>{
+      const t = Math.max(0, Math.min(1, (y - TOP_Y) / (BOT_Y - TOP_Y)));
+      const dy = y <= TOP_Y ? topShift : topShift + (botShift - topShift) * t;
+      el.style.translate = `${ox}px ${dy}px`;
+    });
+    document.querySelectorAll('.map').forEach(m=>{
+      const hh = Math.max(852, H - topShift), ww = 513 * hh / 852;
+      Object.assign(m.style, {height:hh+'px', width:ww+'px', left:(-60 - (ww-513)/2)+'px'});
+    });
   }
-  fit(); addEventListener('resize', fit); addEventListener('orientationchange', ()=>setTimeout(fit,250));
+  fit(); setTimeout(fit, 300); setTimeout(fit, 1200); addEventListener('pageshow', fit); addEventListener('resize', fit); addEventListener('orientationchange', ()=>setTimeout(fit,250));
   if (window.visualViewport) visualViewport.addEventListener('resize', fit);
   /* block pinch-zoom / double-tap zoom / page bounce on iOS */
   ['gesturestart','gesturechange'].forEach(ev=>document.addEventListener(ev, e=>e.preventDefault(), {passive:false}));
