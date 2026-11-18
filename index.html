@@ -28,16 +28,17 @@
   --pretendard:"PretendardX","Pretendard","Apple SD Gothic Neo","Noto Sans KR",sans-serif;
 }
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
-html,body{height:100%;background:#0b0b0b;overflow:hidden;overscroll-behavior:none;-webkit-text-size-adjust:100%;text-size-adjust:100%}
-body{position:fixed;left:0;top:0;width:100%;height:100%;touch-action:manipulation;-webkit-touch-callout:none}
+html,body{margin:0;background:#0b0b0b;overscroll-behavior:none;-webkit-text-size-adjust:100%;text-size-adjust:100%}
+html{height:100%}
+body{position:absolute;left:0;top:0;width:100%;height:100vh;overflow:hidden;touch-action:manipulation;-webkit-touch-callout:none}
 #safe-probe{position:fixed;left:0;top:0;width:0;height:0;visibility:hidden;padding-top:env(safe-area-inset-top);padding-bottom:env(safe-area-inset-bottom)}
-body{display:flex;align-items:center;justify-content:center;font-family:var(--aeonik);-webkit-font-smoothing:antialiased;user-select:none;-webkit-user-select:none}
+body{font-family:var(--aeonik);-webkit-font-smoothing:antialiased;user-select:none;-webkit-user-select:none}
 button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
 img{display:block;-webkit-user-drag:none;user-select:none}
 
 /* ---------- Device stage (393 × 852, scaled to fit) ---------- */
 #viewport{position:relative;width:393px;height:852px;flex:none;transform-origin:center center}
-#viewport.phone{position:fixed;left:0;top:0;transform-origin:0 0}
+#viewport.phone{left:0;top:0;transform-origin:0 0}
 #viewport.phone .time,#viewport.phone .status-icons,#viewport.phone .home-ind{display:none}
 .map{position:absolute;left:-60px;top:0;width:513px;height:852px;max-width:none}
 #device{position:absolute;inset:0;overflow:hidden;background:#000;border-radius:var(--radius,0px);isolation:isolate}
@@ -611,7 +612,7 @@ img{display:block;-webkit-user-drag:none;user-select:none}
      - page below the status bar (normal browser): the empty status zone is trimmed.
      Desktop: the frame is shown as a phone mock. */
   const lvhProbe = document.createElement('div');
-  lvhProbe.style.cssText = 'position:fixed;left:0;top:0;width:0;height:100vh;height:100lvh;visibility:hidden;pointer-events:none';
+  lvhProbe.style.cssText = 'position:absolute;left:0;top:0;width:0;height:100vh;height:100lvh;visibility:hidden;pointer-events:none';
   document.body.appendChild(lvhProbe);
   function fit(){
     const vv = window.visualViewport;
@@ -623,11 +624,13 @@ img{display:block;-webkit-user-drag:none;user-select:none}
       h = Math.max(h, lvhProbe.offsetHeight);                                  // fill the whole screen (no band at the bottom)
       if (standalone && screen.height > screen.width && w <= screen.width + 1) h = Math.max(h, screen.height);
     }
+    document.documentElement.style.height = h + 'px';
     document.body.style.height = h + 'px';
+    if (scrollY) scrollTo(0,0);
     vp.classList.toggle('phone', phone);
     if (!phone){
       const sc = Math.min((w-48)/393, (h-48)/852, 1.25);
-      Object.assign(vp.style, {position:'fixed', width:'393px', height:'852px', transformOrigin:'0 0',
+      Object.assign(vp.style, {position:'absolute', width:'393px', height:'852px', transformOrigin:'0 0',
         left:((w-393*sc)/2)+'px', top:((h-852*sc)/2)+'px', transform:`scale(${sc})`});
       dev.style.setProperty('--radius','44px');
       movers.forEach(([el])=>{ el.style.translate=''; });
@@ -640,7 +643,7 @@ img{display:block;-webkit-user-drag:none;user-select:none}
     const underStatusBar = safeTop > 20;
     const s = Math.min(w/393, h/H_MIN);
     const W = w/s, H = h/s, ox = (W-393)/2;
-    Object.assign(vp.style, {position:'fixed', left:'0px', top:'0px', width:W+'px', height:H+'px', transformOrigin:'0 0', transform:`scale(${s})`});
+    Object.assign(vp.style, {position:'absolute', left:'0px', top:'0px', width:W+'px', height:H+'px', transformOrigin:'0 0', transform:`scale(${s})`});
     dev.style.setProperty('--radius','0px');
     const topShift = underStatusBar ? Math.min(0, safeTop/s - STATUS_H) : -TOP_CUT;
     const botShift = H - 852;
@@ -656,6 +659,10 @@ img{display:block;-webkit-user-drag:none;user-select:none}
   }
   fit(); setTimeout(fit, 300); setTimeout(fit, 1200); addEventListener('pageshow', fit); addEventListener('resize', fit); addEventListener('orientationchange', ()=>setTimeout(fit,250));
   if (window.visualViewport) visualViewport.addEventListener('resize', fit);
+  addEventListener('scroll', ()=>{ if (scrollY || scrollX) scrollTo(0,0); }, {passive:true});
+  /* ?debug : show the size values the phone reports (for checking on the exhibition iPhone) */
+  if (/[?&]debug/.test(location.search)){ const d=document.createElement('div'); d.style.cssText='position:absolute;left:8px;bottom:8px;z-index:99;font:11px/1.4 monospace;color:#0f0;background:rgba(0,0,0,.7);padding:6px 8px;border-radius:6px;white-space:pre'; document.body.appendChild(d);
+    const upd=()=>{ d.textContent=`inner ${innerWidth}x${innerHeight}\nvv ${visualViewport?Math.round(visualViewport.height):'-'}  lvh ${lvhProbe.offsetHeight}\nscreen ${screen.width}x${screen.height}\nsafeTop ${getComputedStyle(probe).paddingTop}  standalone ${navigator.standalone}\nbody ${document.body.style.height}`; }; upd(); setInterval(upd,1000); }
   /* block pinch-zoom / double-tap zoom / page bounce on iOS */
   ['gesturestart','gesturechange'].forEach(ev=>document.addEventListener(ev, e=>e.preventDefault(), {passive:false}));
   document.addEventListener('touchmove', e=>{ if (e.touches.length>1 || !e.target.closest('.sheet')) e.preventDefault(); }, {passive:false});
