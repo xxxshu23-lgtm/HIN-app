@@ -520,7 +520,7 @@ img{display:block;-webkit-user-drag:none;user-select:none}
 
   /* ---------- navigation (dissolve) ---------- */
   const EASE = {inout:'cubic-bezier(.42,0,.58,1)', slow:'cubic-bezier(.45,0,.2,1)', linear:'linear'};
-  let current = null, autoTimer = null, busy = false;
+  let current = null, autoTimer = null, busy = false, transTimer = null;
   function show(id, dur=400, ease='inout'){
     const next = document.getElementById(id);
     if (!next || next===current || busy) return;
@@ -535,7 +535,7 @@ img{display:block;-webkit-user-drag:none;user-select:none}
     next.style.transition = `opacity ${dur}ms ${EASE[ease]||EASE.inout}`;
     next.style.opacity = '1';
     onEnter(next);
-    setTimeout(()=>{
+    transTimer = setTimeout(()=>{
       prev.classList.remove('active');
       next.classList.remove('entering'); next.classList.add('active');
       next.style.transition = ''; next.style.opacity = '';
@@ -564,25 +564,80 @@ img{display:block;-webkit-user-drag:none;user-select:none}
   /* spot detail : press photo → sheet slides up (smart animate 1.25s) */
   const spot4 = document.getElementById('spot4');
   const openSheet = ()=>spot4.classList.add('open');
-  document.getElementById('spotPhoto').addEventListener('pointerdown', openSheet);
-  document.getElementById('sheet').addEventListener('pointerdown', openSheet);
+  const openSheetTouch = e=>{ if (Date.now() < swallowUntil) return; openSheet(); };
+  document.getElementById('spotPhoto').addEventListener('pointerdown', e=>setTimeout(()=>openSheetTouch(e)));
+  document.getElementById('sheet').addEventListener('pointerdown', e=>setTimeout(()=>openSheetTouch(e)));
 
   /* onboarding → home after 1.9s (smart animate 0.7s linear) */
   document.getElementById('onboarding').dataset.auto = 'home';
   Object.assign(document.getElementById('onboarding').dataset, {autoDelay:'1900', autoDur:'700', autoEase:'linear'});
 
-  /* exhibition mode: no touch for IDLE_MS → back to Home (every screen resets to its default state) */
-  const IDLE_MS = 60000;
-  let idleTimer = null;
-  function armIdle(){
-    clearTimeout(idleTimer);
-    idleTimer = setTimeout(()=>{
-      if (current && current.id !== 'home' && current.id !== 'onboarding') show('home', 1146, 'slow');
-      armIdle();
-    }, IDLE_MS);
+  /* ---------- exhibition mode ----------
+     Nobody touching → the app demos the whole flow by itself, looping (attract mode).
+     First touch during the demo → demo stops, app returns to Home in its default state, visitor takes over
+     (that first touch only wakes the app; it doesn't press anything).
+     Visitor stops touching for IDLE_MS → demo starts again from Home. */
+  const FIRST_DEMO_MS = 4000;    // after the opening animation
+  const IDLE_MS = 30000;         // visitor idle → demo again
+  let idleTimer = null, demoRun = 0, demoOn = false, swallowUntil = 0, loop = 0;
+  const sleep = (ms, run) => new Promise((res, rej) => setTimeout(() => run === demoRun ? res() : rej('stop'), ms));
+  const tapEl = el => { if (el) el.click(); };
+  const tap = sel => tapEl(document.querySelector(sel));
+  const tapText = (sel, txt) => tapEl([...document.querySelectorAll(sel)].find(b => b.textContent.trim() === txt));
+  async function demo(run){
+    if (current && current.id !== 'home'){ show('home', 1146, 'slow'); await sleep(1600, run); }
+    for (;;){
+      const k = loop++;
+      await sleep(2600, run);
+      tap('#home .topbtn');                                   await sleep(2800, run);   // ✦ → HERE, I AM, NOW
+      tap('#intro .cta');                                     await sleep(1600, run);   // AI SETUP
+      tapEl(document.querySelectorAll('#ai1 .wbtn')[k % 4]);  await sleep(1400, run);   // pick a work type
+      tap('#ai1 .cta');                                       await sleep(4400, run);   // NEXT → analyzing → 02
+      tap('#ai2 .cta');                                       await sleep(3200, run);   // 03 review
+      tap('#ai3 .cta');                                       await sleep(2600, run);   // APPLY → Home
+      tap('#home .mainbar button.slot[data-go=mode]');        await sleep(2600, run);   // mode tab
+      for (let i = 0; i < 1 + (k % 3); i++){ tap('#mode .cstate.on .thumb[data-step="1"]'); await sleep(1900, run); }
+      tap('#mode .cstate.on .card');                          await sleep(1800, run);   // build a work mode
+      tapText('#build .chip', ['0°','30°','60°','90°'][(k+2) % 4]);        await sleep(800, run);
+      tapText('#build .chip', ['Off','Standard','Bright'][(k+1) % 3]);     await sleep(800, run);
+      tapText('#build .chip', ['Cool','Neutral','Warm'][(k+2) % 3]);       await sleep(1300, run);
+      tap('#build .cta');                                     await sleep(4600, run);   // SAVE → preparing → saved mode
+      tap('#casual .cta');                                    await sleep(2200, run);   // back to mode tab
+      tap('#mode .mainbar button.slot[data-go=spot1]');       await sleep(2600, run);   // spot tab
+      tap('#spot1 .marker');                                  await sleep(2600, run);   // Cafe Mellow card
+      tap('#spot3 .spotcard');                                await sleep(2000, run);   // spot detail
+      openSheet();                                            await sleep(4200, run);   // sheet slides up
+      tap('#spot4 button.tap');                               await sleep(1400, run);   // back
+      tap('#spot3 .mainbar button.slot[data-go=home]');       await sleep(1600, run);   // Home → loop
+    }
   }
-  ['pointerdown','touchstart','keydown','wheel'].forEach(ev=>addEventListener(ev, armIdle, {passive:true}));
-  armIdle();
+  function startDemo(){
+    if (demoOn) return;
+    demoOn = true; const run = ++demoRun;
+    demo(run).catch(()=>{});
+  }
+  function stopDemo(){ demoOn = false; demoRun++; }
+  function jumpTo(id){                                         // cancel any running transition and switch at once
+    clearTimeout(transTimer); clearTimeout(autoTimer); busy = false;
+    document.querySelectorAll('.screen').forEach(sc=>{ sc.classList.remove('active','entering'); sc.style.opacity=''; sc.style.transition=''; });
+    current = null; show(id);
+  }
+  function armIdle(ms = IDLE_MS){ clearTimeout(idleTimer); idleTimer = setTimeout(startDemo, ms); }
+  function onTouch(e){
+    if (!e.isTrusted) return;
+    if (demoOn){
+      stopDemo();
+      swallowUntil = Date.now() + 700;                          // this touch only wakes the app
+      e.preventDefault && e.cancelable && e.preventDefault();
+      e.stopPropagation();
+      jumpTo('home');
+    }
+    armIdle();
+  }
+  ['pointerdown','touchstart','keydown','wheel'].forEach(ev=>addEventListener(ev, onTouch, {capture:true, passive:false}));
+  document.addEventListener('click', e=>{ if (e.isTrusted && Date.now() < swallowUntil){ e.stopPropagation(); e.preventDefault(); } }, true);
+  // spot photo/sheet open on pointerdown — ignore the waking touch there too
+  armIdle(1900 + 700 + FIRST_DEMO_MS);
 
   /* deep link (#home, #mode …) for review */
   const start = (location.hash||'').slice(1);
